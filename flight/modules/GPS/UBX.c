@@ -43,7 +43,7 @@
 
 static bool useMag = false;
 #endif
-static GPSPositionSensorSensorTypeOptions sensorType = GPSPOSITIONSENSOR_SENSORTYPE_UNKNOWN;
+GPSPositionSensorSensorTypeOptions sensorType = GPSPOSITIONSENSOR_SENSORTYPE_UNKNOWN;
 
 static bool usePvt = false;
 static uint32_t lastPvtTime = 0;
@@ -107,7 +107,7 @@ struct UBX_ACK_NAK ubxLastNak;
 #define UBX_PVT_TIMEOUT (1000)
 // parse incoming character stream for messages in UBX binary format
 
-int parse_ubx_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPositionSensorData *GpsData, struct GPS_RX_STATS *gpsRxStats)
+int parse_ubx_stream(uint8_t *rx, uint16_t len, char *gps_rx_buffer, GPSPositionSensorData *GpsData, struct GPS_RX_STATS *gpsRxStats)
 {
     int ret = PARSER_INCOMPLETE; // message not (yet) complete
     enum proto_states {
@@ -124,11 +124,12 @@ int parse_ubx_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPositionS
     };
     uint8_t c;
     static enum proto_states proto_state = START;
-    static uint8_t rx_count = 0;
-    struct UBXPacket *ubx   = (struct UBXPacket *)gps_rx_buffer;
+    static uint16_t rx_count = 0;
+    struct UBXPacket *ubx    = (struct UBXPacket *)gps_rx_buffer;
+    int i = 0;
 
-    for (int i = 0; i < len; i++) {
-        c = rx[i];
+    while (i < len) {
+        c = rx[i++];
         switch (proto_state) {
         case START: // detect protocol
             if (c == UBX_SYNC1) { // first UBX sync char found
@@ -170,9 +171,6 @@ int parse_ubx_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPositionS
                 if (++rx_count == ubx->header.len) {
                     proto_state = UBX_CHK1;
                 }
-            } else {
-                gpsRxStats->gpsRxOverflow++;
-                proto_state = START;
             }
             break;
         case UBX_CHK1:
@@ -189,7 +187,8 @@ int parse_ubx_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPositionS
                 proto_state = START;
             }
             break;
-        default: break;
+        default:
+            break;
         }
 
         if (proto_state == START) {
@@ -200,6 +199,7 @@ int parse_ubx_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPositionS
             ret = PARSER_COMPLETE; // message complete & processed
         }
     }
+
     return ret;
 }
 
@@ -413,8 +413,10 @@ static void parse_ubx_nav_svinfo(struct UBXPacket *ubx, __attribute__((unused)) 
     struct UBX_NAV_SVINFO *svinfo = &ubx->payload.nav_svinfo;
 
     svdata.SatsInView = 0;
+
+    // First, use slots for SVs actually being received
     for (chan = 0; chan < svinfo->numCh; chan++) {
-        if (svdata.SatsInView < GPSSATELLITES_PRN_NUMELEM) {
+        if (svdata.SatsInView < GPSSATELLITES_PRN_NUMELEM && svinfo->sv[chan].cno > 0) {
             svdata.Azimuth[svdata.SatsInView]   = svinfo->sv[chan].azim;
             svdata.Elevation[svdata.SatsInView] = svinfo->sv[chan].elev;
             svdata.PRN[svdata.SatsInView] = svinfo->sv[chan].svid;
@@ -422,6 +424,18 @@ static void parse_ubx_nav_svinfo(struct UBXPacket *ubx, __attribute__((unused)) 
             svdata.SatsInView++;
         }
     }
+
+    // Now try to add the rest
+    for (chan = 0; chan < svinfo->numCh; chan++) {
+        if (svdata.SatsInView < GPSSATELLITES_PRN_NUMELEM && 0 == svinfo->sv[chan].cno) {
+            svdata.Azimuth[svdata.SatsInView]   = svinfo->sv[chan].azim;
+            svdata.Elevation[svdata.SatsInView] = svinfo->sv[chan].elev;
+            svdata.PRN[svdata.SatsInView] = svinfo->sv[chan].svid;
+            svdata.SNR[svdata.SatsInView] = svinfo->sv[chan].cno;
+            svdata.SatsInView++;
+        }
+    }
+
     // fill remaining slots (if any)
     for (chan = svdata.SatsInView; chan < GPSSATELLITES_PRN_NUMELEM; chan++) {
         svdata.Azimuth[chan]   = 0;
@@ -452,9 +466,11 @@ static void parse_ubx_mon_ver(struct UBXPacket *ubx, __attribute__((unused)) GPS
     struct UBX_MON_VER *mon_ver = &ubx->payload.mon_ver;
 
     ubxHwVersion = atoi(mon_ver->hwVersion);
-
     sensorType   = (ubxHwVersion >= 80000) ? GPSPOSITIONSENSOR_SENSORTYPE_UBX8 :
                    ((ubxHwVersion >= 70000) ? GPSPOSITIONSENSOR_SENSORTYPE_UBX7 : GPSPOSITIONSENSOR_SENSORTYPE_UBX);
+    // send sensor type right now because on UBX NEMA we don't get a full set of messages
+    // and we want to be able to see sensor type even on UBX NEMA GPS's
+    GPSPositionSensorSensorTypeSet((uint8_t *)&sensorType);
 }
 
 static void parse_ubx_op_sys(struct UBXPacket *ubx, __attribute__((unused)) GPSPositionSensorData *GpsPosition)
@@ -512,6 +528,8 @@ uint32_t parse_ubx_message(struct UBXPacket *ubx, GPSPositionSensorData *GpsPosi
     GpsPosition->SensorType = sensorType;
 
     if (msgtracker.msg_received == ALL_RECEIVED) {
+        // leave my new field alone!
+        GPSPositionSensorBaudRateGet(&GpsPosition->BaudRate);
         GPSPositionSensorSet(GpsPosition);
         msgtracker.msg_received = NONE_RECEIVED;
         id = GPSPOSITIONSENSOR_OBJID;

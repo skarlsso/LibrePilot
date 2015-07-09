@@ -50,6 +50,22 @@ typedef struct {
 
 static int32_t PIOS_HMC5x83_Config(pios_hmc5x83_dev_data_t *dev);
 
+// sensor driver interface
+bool PIOS_HMC5x83_driver_Test(uintptr_t context);
+void PIOS_HMC5x83_driver_Reset(uintptr_t context);
+void PIOS_HMC5x83_driver_get_scale(float *scales, uint8_t size, uintptr_t context);
+void PIOS_HMC5x83_driver_fetch(void *, uint8_t size, uintptr_t context);
+bool PIOS_HMC5x83_driver_poll(uintptr_t context);
+
+const PIOS_SENSORS_Driver PIOS_HMC5x83_Driver = {
+    .test      = PIOS_HMC5x83_driver_Test,
+    .poll      = PIOS_HMC5x83_driver_poll,
+    .fetch     = PIOS_HMC5x83_driver_fetch,
+    .reset     = PIOS_HMC5x83_driver_Reset,
+    .get_queue = NULL,
+    .get_scale = PIOS_HMC5x83_driver_get_scale,
+    .is_polled = true,
+};
 /**
  * Allocate the device setting structure
  * @return pios_hmc5x83_dev_data_t pointer to newly created structure
@@ -97,6 +113,11 @@ pios_hmc5x83_dev_t PIOS_HMC5x83_Init(const struct pios_hmc5x83_cfg *cfg, uint32_
 
     dev->data_ready = false;
     return (pios_hmc5x83_dev_t)dev;
+}
+
+void PIOS_HMC5x83_Register(pios_hmc5x83_dev_t handler)
+{
+    PIOS_SENSORS_Register(&PIOS_HMC5x83_Driver, PIOS_SENSORS_TYPE_3AXIS_MAG, handler);
 }
 
 /**
@@ -203,7 +224,7 @@ int32_t PIOS_HMC5x83_ReadMag(pios_hmc5x83_dev_t handler, int16_t out[3])
 
     dev->data_ready = false;
     uint8_t buffer[6];
-    int32_t temp;
+    int16_t temp[3];
     int32_t sensitivity;
 
     if (dev->cfg->Driver->Read(handler, PIOS_HMC5x83_DATAOUT_XMSB_REG, buffer, 6) != 0) {
@@ -238,16 +259,54 @@ int32_t PIOS_HMC5x83_ReadMag(pios_hmc5x83_dev_t handler, int16_t out[3])
     default:
         PIOS_Assert(0);
     }
-
     for (int i = 0; i < 3; i++) {
-        temp   = ((int16_t)((uint16_t)buffer[2 * i] << 8)
-                  + buffer[2 * i + 1]) * 1000 / sensitivity;
-        out[i] = temp;
+        int16_t v = ((int16_t)((uint16_t)buffer[2 * i] << 8)
+                     + buffer[2 * i + 1]) * 1000 / sensitivity;
+        temp[i] = v;
     }
-    // Data reads out as X,Z,Y
-    temp   = out[2];
-    out[2] = out[1];
-    out[1] = temp;
+
+    switch (dev->cfg->Orientation) {
+    case PIOS_HMC5X83_ORIENTATION_EAST_NORTH_UP:
+        out[0] = temp[2];
+        out[1] = temp[0];
+        out[2] = -temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_SOUTH_EAST_UP:
+        out[0] = -temp[0];
+        out[1] = temp[2];
+        out[2] = -temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_WEST_SOUTH_UP:
+        out[0] = -temp[2];
+        out[1] = -temp[0];
+        out[2] = -temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_NORTH_WEST_UP:
+        out[0] = temp[0];
+        out[1] = -temp[2];
+        out[2] = -temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_EAST_SOUTH_DOWN:
+        out[0] = temp[2];
+        out[1] = -temp[0];
+        out[2] = temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_SOUTH_WEST_DOWN:
+        out[0] = -temp[0];
+        out[1] = -temp[2];
+        out[2] = temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_WEST_NORTH_DOWN:
+        out[0] = -temp[2];
+        out[1] = temp[0];
+        out[2] = temp[1];
+        break;
+    case PIOS_HMC5X83_ORIENTATION_NORTH_EAST_DOWN:
+        out[0] = temp[0];
+        out[1] = temp[2];
+        out[2] = temp[1];
+        break;
+    }
 
     // This should not be necessary but for some reason it is coming out of continuous conversion mode
     dev->cfg->Driver->Write(handler, PIOS_HMC5x83_MODE_REG, PIOS_HMC5x83_MODE_CONTINUOUS);
@@ -549,6 +608,37 @@ int32_t PIOS_HMC5x83_I2C_Write(pios_hmc5x83_dev_t handler, uint8_t address, uint
 }
 #endif /* PIOS_INCLUDE_I2C */
 
+/* PIOS sensor driver implementation */
+bool PIOS_HMC5x83_driver_Test(uintptr_t context)
+{
+    return !PIOS_HMC5x83_Test((pios_hmc5x83_dev_t)context);
+}
+
+void PIOS_HMC5x83_driver_Reset(__attribute__((unused)) uintptr_t context) {}
+
+void PIOS_HMC5x83_driver_get_scale(float *scales, uint8_t size, __attribute__((unused))  uintptr_t context)
+{
+    PIOS_Assert(size > 0);
+    scales[0] = 1;
+}
+
+void PIOS_HMC5x83_driver_fetch(void *data, uint8_t size, uintptr_t context)
+{
+    PIOS_Assert(size > 0);
+    int16_t mag[3];
+    PIOS_HMC5x83_ReadMag((pios_hmc5x83_dev_t)context, mag);
+    PIOS_SENSORS_3Axis_SensorsWithTemp *tmp = data;
+    tmp->count = 1;
+    tmp->sample[0].x = mag[0];
+    tmp->sample[0].y = mag[1];
+    tmp->sample[0].z = mag[2];
+    tmp->temperature = 0;
+}
+
+bool PIOS_HMC5x83_driver_poll(uintptr_t context)
+{
+    return PIOS_HMC5x83_NewDataAvailable((pios_hmc5x83_dev_t)context);
+}
 
 #endif /* PIOS_INCLUDE_HMC5x83 */
 

@@ -179,6 +179,7 @@ public:
         }
         return m_connectionManager;
     }
+    void reboot() const;
 
 private slots:
     void customBackClicked();

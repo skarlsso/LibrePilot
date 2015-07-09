@@ -55,11 +55,16 @@
 #include "accessorydesired.h"
 #include "manualcontrolcommand.h"
 #include "stabilizationsettings.h"
+#include "attitudesettings.h"
+#ifdef REVOLUTION
+#include "altitudeholdsettings.h"
+#endif
 #include "stabilizationbank.h"
 #include "stabilizationsettingsbank1.h"
 #include "stabilizationsettingsbank2.h"
 #include "stabilizationsettingsbank3.h"
 #include "flightstatus.h"
+#include "txpidstatus.h"
 #include "hwsettings.h"
 
 //
@@ -95,6 +100,10 @@ int32_t TxPIDInitialize(void)
     bool txPIDEnabled;
     HwSettingsOptionalModulesData optionalModules;
 
+#ifdef REVOLUTION
+    AltitudeHoldSettingsInitialize();
+#endif
+
     HwSettingsInitialize();
     HwSettingsOptionalModulesGet(&optionalModules);
 
@@ -106,6 +115,7 @@ int32_t TxPIDInitialize(void)
 
     if (txPIDEnabled) {
         TxPIDSettingsInitialize();
+        TxPIDStatusInitialize();
         AccessoryDesiredInitialize();
 
         UAVObjEvent ev = {
@@ -130,7 +140,14 @@ int32_t TxPIDInitialize(void)
         metadata.telemetryUpdateMode   = UPDATEMODE_PERIODIC;
         metadata.telemetryUpdatePeriod = TELEMETRY_UPDATE_PERIOD_MS;
         StabilizationSettingsSetMetadata(&metadata);
-#endif
+
+        AttitudeSettingsInitialize();
+        AttitudeSettingsGetMetadata(&metadata);
+        metadata.telemetryAcked = 0;
+        metadata.telemetryUpdateMode   = UPDATEMODE_PERIODIC;
+        metadata.telemetryUpdatePeriod = TELEMETRY_UPDATE_PERIOD_MS;
+        AttitudeSettingsSetMetadata(&metadata);
+#endif /* if (TELEMETRY_UPDATE_PERIOD_MS != 0) */
 
         return 0;
     }
@@ -188,10 +205,25 @@ static void updatePIDs(UAVObjEvent *ev)
     }
     StabilizationSettingsData stab;
     StabilizationSettingsGet(&stab);
+
+    AttitudeSettingsData att;
+    AttitudeSettingsGet(&att);
+
+#ifdef REVOLUTION
+    AltitudeHoldSettingsData altitude;
+    AltitudeHoldSettingsGet(&altitude);
+#endif
     AccessoryDesiredData accessory;
 
-    uint8_t needsUpdateBank = 0;
-    uint8_t needsUpdateStab = 0;
+    TxPIDStatusData txpid_status;
+    TxPIDStatusGet(&txpid_status);
+
+    uint8_t needsUpdateBank     = 0;
+    uint8_t needsUpdateStab     = 0;
+    uint8_t needsUpdateAtt      = 0;
+#ifdef REVOLUTION
+    uint8_t needsUpdateAltitude = 0;
+#endif
 
     // Loop through every enabled instance
     for (uint8_t i = 0; i < TXPIDSETTINGS_PIDS_NUMELEM; i++) {
@@ -213,6 +245,8 @@ static void updatePIDs(UAVObjEvent *ev)
             } else {
                 continue;
             }
+
+            TxPIDStatusCurPIDToArray(txpid_status.CurPID)[i] = value;
 
             switch (TxPIDSettingsPIDsToArray(inst.PIDs)[i]) {
             case TXPIDSETTINGS_PIDS_ROLLRATEKP:
@@ -351,6 +385,33 @@ static void updatePIDs(UAVObjEvent *ev)
             case TXPIDSETTINGS_PIDS_ACROPLUSFACTOR:
                 needsUpdateBank |= update(&bank.AcroInsanityFactor, value);
                 break;
+            case TXPIDSETTINGS_PIDS_ACCELTAU:
+                needsUpdateAtt  |= update(&att.AccelTau, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ACCELKP:
+                needsUpdateAtt  |= update(&att.AccelKp, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ACCELKI:
+                needsUpdateAtt  |= update(&att.AccelKi, value);
+                break;
+
+#ifdef REVOLUTION
+            case TXPIDSETTINGS_PIDS_ALTITUDEPOSKP:
+                needsUpdateAltitude |= update(&altitude.VerticalPosP, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ALTITUDEVELOCITYKP:
+                needsUpdateAltitude |= update(&altitude.VerticalVelPID.Kp, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ALTITUDEVELOCITYKI:
+                needsUpdateAltitude |= update(&altitude.VerticalVelPID.Ki, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ALTITUDEVELOCITYKD:
+                needsUpdateAltitude |= update(&altitude.VerticalVelPID.Kd, value);
+                break;
+            case TXPIDSETTINGS_PIDS_ALTITUDEVELOCITYBETA:
+                needsUpdateAltitude |= update(&altitude.VerticalVelPID.Beta, value);
+                break;
+#endif
             default:
                 PIOS_Assert(0);
             }
@@ -359,6 +420,14 @@ static void updatePIDs(UAVObjEvent *ev)
     if (needsUpdateStab) {
         StabilizationSettingsSet(&stab);
     }
+    if (needsUpdateAtt) {
+        AttitudeSettingsSet(&att);
+    }
+#ifdef REVOLUTION
+    if (needsUpdateAltitude) {
+        AltitudeHoldSettingsSet(&altitude);
+    }
+#endif
     if (needsUpdateBank) {
         switch (inst.BankNumber) {
         case 0:
@@ -376,6 +445,15 @@ static void updatePIDs(UAVObjEvent *ev)
         default:
             return;
         }
+    }
+
+    if (needsUpdateStab ||
+        needsUpdateAtt ||
+#ifdef REVOLUTION
+        needsUpdateAltitude ||
+#endif /* REVOLUTION */
+        needsUpdateBank) {
+        TxPIDStatusSet(&txpid_status);;
     }
 }
 

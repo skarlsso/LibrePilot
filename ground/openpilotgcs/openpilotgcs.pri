@@ -11,10 +11,6 @@ defineReplace(cleanPath) {
     return($$join(out, /, $$pfx))
 }
 
-defineReplace(targetPath) {
-    return($$replace(1, /, $$QMAKE_DIR_SEP))
-}
-
 defineReplace(addNewline) { 
     return($$escape_expand(\\n\\t))
 }
@@ -30,6 +26,57 @@ defineReplace(qtLibraryName) {
    }
    isEmpty(RET):RET = $$LIBRARY_NAME
    return($$RET)
+}
+
+defineTest(addCopyFileTarget) {
+    file = $$1
+    src  = $$2/$$1
+    dest = $$3/$$1
+
+    $${file}.target    = $$dest
+    $${file}.depends   = $$src
+
+    # create directory. Better would be an order only dependency
+    $${file}.commands  = -@$(MKDIR) \"$$dirname(dest)\" $$addNewline()
+    $${file}.commands += $(COPY_FILE) \"$$src\" \"$$dest\"
+
+    QMAKE_EXTRA_TARGETS += $$file
+    POST_TARGETDEPS += $$eval($${file}.target)
+
+    export($${file}.target)
+    export($${file}.depends)
+    export($${file}.commands)
+    export(QMAKE_EXTRA_TARGETS)
+    export(POST_TARGETDEPS)
+
+    return(true)
+}
+
+defineTest(addCopyDirTarget) {
+    dir  = $$1
+    src  = $$2/$$1
+    dest = $$3/$$1
+
+    $${dir}.target    = $$dest
+    $${dir}.depends   = $$src
+    # Windows does not update directory timestamp if files are modified
+    win32: $${dir}.depends += FORCE
+
+    $${dir}.commands  = @rm -rf \"$$dest\" $$addNewline()
+    # create directory. Better would be an order only dependency
+    $${dir}.commands += -@$(MKDIR) \"$$dirname(dest)\" $$addNewline()
+    $${dir}.commands += $(COPY_DIR) \"$$src\" \"$$dest\"
+
+    QMAKE_EXTRA_TARGETS += $$dir
+    POST_TARGETDEPS += $$eval($${dir}.target)
+
+    export($${dir}.target)
+    export($${dir}.depends)
+    export($${dir}.commands)
+    export(QMAKE_EXTRA_TARGETS)
+    export(POST_TARGETDEPS)
+
+    return(true)
 }
 
 # For use in custom compilers which just copy files
@@ -66,6 +113,8 @@ equals(TEST, 1) {
 win32:!isEmpty(QMAKE_SH):QMAKE_COPY_DIR = cp -r -f
 
 GCS_SOURCE_TREE = $$PWD
+ROOT_DIR = $$GCS_SOURCE_TREE/../..
+
 isEmpty(GCS_BUILD_TREE) {
     sub_dir = $$_PRO_FILE_PWD_
     sub_dir ~= s,^$$re_escape($$PWD),,
@@ -80,7 +129,7 @@ isEmpty(TOOLS_DIR) {
     # check for custom enviroment variable,
     TOOLS_DIR = $$(OPENPILOT_TOOLS_DIR)
     # fallback to default location.
-    isEmpty(TOOLS_DIR):TOOLS_DIR = $$clean_path($$GCS_SOURCE_TREE/../../tools)
+    isEmpty(TOOLS_DIR):TOOLS_DIR = $$clean_path($$ROOT_DIR/tools)
 }
 
 GCS_APP_PATH = $$GCS_BUILD_TREE/bin
@@ -115,8 +164,11 @@ macx {
         MESAWIN_DIR = $$(MESAWIN_DIR)
         isEmpty(MESAWIN_DIR):MESAWIN_DIR = $${TOOLS_DIR}/mesawin
 
-        contains(TEMPLATE, vc.*)|contains(TEMPLATE_PREFIX, vc):vcproj = 1
         GCS_APP_TARGET   = openpilotgcs
+
+        GCS_QT_PLUGINS_PATH = $$GCS_APP_PATH
+        GCS_QT_QML_PATH = $$GCS_APP_PATH
+
         copyqt = $$copydata
     } else {
         GCS_APP_TARGET   = openpilotgcs

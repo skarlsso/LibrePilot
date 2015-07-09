@@ -44,11 +44,45 @@ EscPage::~EscPage()
 
 bool EscPage::validatePage()
 {
-    if (ui->rapidESCButton->isChecked()) {
-        getWizard()->setEscType(SetupWizard::ESC_RAPID);
-    } else {
+    if (ui->oneshotESCButton->isChecked()) {
+        getWizard()->setEscType(SetupWizard::ESC_ONESHOT);
+    } else if (ui->rapidESCButton->isChecked()) {
+        if (isSynchOrOneShotAvailable()) {
+            getWizard()->setEscType(SetupWizard::ESC_SYNCHED);
+        } else {
+            getWizard()->setEscType(SetupWizard::ESC_RAPID);
+        }
+    } else if (ui->defaultESCButton->isChecked()) {
         getWizard()->setEscType(SetupWizard::ESC_STANDARD);
     }
 
     return true;
+}
+
+
+void EscPage::initializePage()
+{
+    bool enabled = isSynchOrOneShotAvailable();
+
+    ui->oneshotESCButton->setEnabled(enabled);
+    if (ui->oneshotESCButton->isChecked() && !enabled) {
+        ui->oneshotESCButton->setChecked(false);
+        ui->rapidESCButton->setChecked(true);
+    }
+}
+
+bool EscPage::isSynchOrOneShotAvailable()
+{
+    bool available = true;
+
+    switch (getWizard()->getControllerType()) {
+    case SetupWizard::CONTROLLER_NANO:
+        available = getWizard()->getInputType() != SetupWizard::INPUT_PWM;
+        break;
+
+    default:
+        break;
+    }
+
+    return available;
 }

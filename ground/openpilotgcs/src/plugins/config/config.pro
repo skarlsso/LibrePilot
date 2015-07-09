@@ -21,9 +21,6 @@ HEADERS += \
     configinputwidget.h \
     configoutputwidget.h \
     configvehicletypewidget.h \
-    config_cc_hw_widget.h \
-    configccattitudewidget.h \
-    configpipxtremewidget.h \
     configstabilizationwidget.h \
     assertions.h \
     defaultattitudewidget.h \
@@ -57,7 +54,9 @@ HEADERS += \
     calibration/sixpointcalibrationmodel.h \
     calibration/levelcalibrationmodel.h \
     calibration/gyrobiascalibrationmodel.h \
-    calibration/calibrationuiutils.h
+    calibration/calibrationuiutils.h \
+    configoplinkwidget.h \
+    configrevonanohwwidget.h
 
 SOURCES += \
     configplugin.cpp \
@@ -68,10 +67,7 @@ SOURCES += \
     configinputwidget.cpp \
     configoutputwidget.cpp \
     configvehicletypewidget.cpp \
-    config_cc_hw_widget.cpp \
-    configccattitudewidget.cpp \
     configstabilizationwidget.cpp \
-    configpipxtremewidget.cpp \
     defaultattitudewidget.cpp \
     defaulthwsettingswidget.cpp \
     channelform.cpp \
@@ -97,7 +93,9 @@ SOURCES += \
     calibration/thermal/thermalcalibrationmodel.cpp \
     calibration/sixpointcalibrationmodel.cpp \
     calibration/levelcalibrationmodel.cpp \
-    calibration/gyrobiascalibrationmodel.cpp
+    calibration/gyrobiascalibrationmodel.cpp \
+    configoplinkwidget.cpp \
+    configrevonanohwwidget.cpp
 
 FORMS += \
     airframe.ui \
@@ -106,11 +104,10 @@ FORMS += \
     airframe_ground.ui \
     airframe_multirotor.ui \
     airframe_custom.ui \
-    cc_hw_settings.ui \
     stabilization.ui \
     input.ui \
+    input_wizard.ui \
     output.ui \
-    ccattitude.ui \
     defaultattitude.ui \
     defaulthwsettings.ui \
     inputchannelform.ui \
@@ -118,8 +115,9 @@ FORMS += \
     outputchannelform.ui \
     revosensors.ui \
     txpid.ui \
-    pipxtreme.ui \
     mixercurve.ui \
-    configrevohwwidget.ui
+    configrevohwwidget.ui \
+    oplink.ui \
+    configrevonanohwwidget.ui
 
 RESOURCES += configgadget.qrc

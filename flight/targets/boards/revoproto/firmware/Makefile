@@ -24,16 +24,16 @@ endif
 include ../board-info.mk
 include $(ROOT_DIR)/make/firmware-defs.mk
 
+# REVO C++ support 
+USE_CXX = YES
+
 # ARM DSP library
 USE_DSP_LIB ?= NO
 
 # List of mandatory modules to include
 MODULES += Sensors
-#MODULES += Attitude/revolution
-MODULES += StateEstimation # use instead of Attitude
-MODULES += Altitude/revolution
+MODULES += StateEstimation
 MODULES += Airspeed
-#MODULES += AltitudeHold # now integrated in Stabilization
 MODULES += Stabilization
 MODULES += ManualControl
 MODULES += Receiver
@@ -68,13 +68,15 @@ ifndef TESTAPP
     ## Application Core
     SRC += ../pios_usb_board_data.c
     SRC += $(OPMODULEDIR)/System/systemmod.c
-    SRC += $(OPSYSTEM)/revolution.c
+    CPPSRC += $(OPSYSTEM)/revolution.cpp
     SRC += $(OPSYSTEM)/pios_board.c
     SRC += $(FLIGHTLIB)/alarms.c
     SRC += $(OPUAVTALK)/uavtalk.c
     SRC += $(OPUAVOBJ)/uavobjectmanager.c
     SRC += $(OPUAVOBJ)/uavobjectpersistence.c
     SRC += $(OPUAVOBJ)/eventdispatcher.c
+    SRC += $(PIOSCOMMON)/pios_flashfs_logfs.c
+    SRC += $(PIOSCOMMON)/pios_flash_jedec.c
 
     #ifeq ($(DEBUG), YES)
     SRC += $(OPSYSTEM)/dcc_stdio.c
@@ -87,6 +89,8 @@ ifndef TESTAPP
     SRC += $(FLIGHTLIB)/WorldMagModel.c
     SRC += $(FLIGHTLIB)/insgps13state.c
     SRC += $(FLIGHTLIB)/auxmagsupport.c
+    CPPSRC += $(FLIGHTLIB)/mini_cpp.cpp
+
 
     ## UAVObjects
     include ./UAVObjects.inc

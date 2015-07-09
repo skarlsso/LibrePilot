@@ -108,8 +108,6 @@
 #define PIOS_INCLUDE_IAP
 #define PIOS_INCLUDE_SERVO
 /* #define PIOS_INCLUDE_I2C_ESC */
-#define PIOS_INCLUDE_OVERO
-#define PIOS_OVERO_SPI
 /* #define PIOS_INCLUDE_SDCARD */
 /* #define LOG_FILENAME "startup.log" */
 #define PIOS_INCLUDE_FLASH
@@ -117,6 +115,8 @@
 #define PIOS_INCLUDE_FLASH_LOGFS_SETTINGS
 #define FLASH_FREERTOS
 /* #define PIOS_INCLUDE_FLASH_EEPROM */
+
+#define PIOS_INCLUDE_DEBUGLOG
 
 /* PIOS radio modules */
 /* #define PIOS_INCLUDE_RFM22B */

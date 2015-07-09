@@ -1011,7 +1011,6 @@ static const struct pios_sbus_cfg pios_sbus_cfg = {
     .gpio_clk_periph  = RCC_AHB1Periph_GPIOC,
 };
 
-
 #ifdef PIOS_INCLUDE_COM_FLEXI
 /*
  * FLEXI PORT
@@ -1119,6 +1118,54 @@ static const struct pios_dsm_cfg pios_dsm_flexi_cfg = {
 
 #endif /* PIOS_INCLUDE_DSM */
 
+#if defined(PIOS_INCLUDE_SRXL)
+/*
+ * SRXL USART
+ */
+#include <pios_srxl_priv.h>
+
+static const struct pios_usart_cfg pios_usart_srxl_flexi_cfg = {
+    .regs  = USART3,
+    .remap = GPIO_AF_USART3,
+    .init  = {
+        .USART_BaudRate   = 115200,
+        .USART_WordLength = USART_WordLength_8b,
+        .USART_Parity     = USART_Parity_No,
+        .USART_StopBits   = USART_StopBits_1,
+        .USART_HardwareFlowControl             = USART_HardwareFlowControl_None,
+        .USART_Mode                            = USART_Mode_Rx,
+    },
+    .irq                                       = {
+        .init                                  = {
+            .NVIC_IRQChannel    = USART3_IRQn,
+            .NVIC_IRQChannelPreemptionPriority = PIOS_IRQ_PRIO_HIGH,
+            .NVIC_IRQChannelSubPriority        = 0,
+            .NVIC_IRQChannelCmd = ENABLE,
+        },
+    },
+    .rx                                        = {
+        .gpio = GPIOB,
+        .init = {
+            .GPIO_Pin   = GPIO_Pin_11,
+            .GPIO_Speed = GPIO_Speed_2MHz,
+            .GPIO_Mode  = GPIO_Mode_AF,
+            .GPIO_OType = GPIO_OType_PP,
+            .GPIO_PuPd  = GPIO_PuPd_UP
+        },
+    },
+    .tx                                        = {
+        .gpio = GPIOB,
+        .init = {
+            .GPIO_Pin   = GPIO_Pin_10,
+            .GPIO_Speed = GPIO_Speed_2MHz,
+            .GPIO_Mode  = GPIO_Mode_OUT,
+            .GPIO_OType = GPIO_OType_PP,
+            .GPIO_PuPd  = GPIO_PuPd_UP
+        },
+    },
+};
+
+#endif /* PIOS_INCLUDE_SRXL */
 /*
  * HK OSD
  */
@@ -1224,6 +1271,17 @@ static const struct pios_usart_cfg pios_usart_rcvrport_cfg = {
         },
     },
 
+    .dtr                                       = {
+        // FlexIO pin 9
+        .gpio = GPIOC,
+        .init = {
+            .GPIO_Pin   = GPIO_Pin_8,
+            .GPIO_Speed = GPIO_Speed_25MHz,
+            .GPIO_Mode  = GPIO_Mode_OUT,
+            .GPIO_OType = GPIO_OType_PP,
+        },
+    },
+
     .tx                                        = {
         // *  7: PC6 = TIM8 CH1, USART6 TX
         .gpio = GPIOC,
@@ -1272,9 +1330,10 @@ void I2C1_ER_IRQHandler()
 __attribute__((alias("PIOS_I2C_mag_pressure_adapter_er_irq_handler")));
 
 static const struct pios_i2c_adapter_cfg pios_i2c_mag_pressure_adapter_cfg = {
-    .regs  = I2C1,
-    .remap = GPIO_AF_I2C1,
-    .init  = {
+    .regs     = I2C1,
+    .remapSCL = GPIO_AF_I2C1,
+    .remapSDA = GPIO_AF_I2C1,
+    .init     = {
         .I2C_Mode = I2C_Mode_I2C,
         .I2C_OwnAddress1                       = 0,
         .I2C_Ack  = I2C_Ack_Enable,
@@ -1343,9 +1402,10 @@ void I2C2_EV_IRQHandler() __attribute__((alias("PIOS_I2C_flexiport_adapter_ev_ir
 void I2C2_ER_IRQHandler() __attribute__((alias("PIOS_I2C_flexiport_adapter_er_irq_handler")));
 
 static const struct pios_i2c_adapter_cfg pios_i2c_flexiport_adapter_cfg = {
-    .regs  = I2C2,
-    .remap = GPIO_AF_I2C2,
-    .init  = {
+    .regs     = I2C2,
+    .remapSCL = GPIO_AF_I2C2,
+    .remapSDA = GPIO_AF_I2C2,
+    .init     = {
         .I2C_Mode = I2C_Mode_I2C,
         .I2C_OwnAddress1                       = 0,
         .I2C_Ack  = I2C_Ack_Enable,

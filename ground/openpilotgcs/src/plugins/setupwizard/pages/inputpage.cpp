@@ -55,6 +55,8 @@ bool InputPage::validatePage()
         getWizard()->setInputType(SetupWizard::INPUT_SBUS);
     } else if (ui->spectrumButton->isChecked()) {
         getWizard()->setInputType(SetupWizard::INPUT_DSM);
+    } else if (ui->multiplexButton->isChecked()) {
+        getWizard()->setInputType(SetupWizard::INPUT_SRXL);
     } else {
         getWizard()->setInputType(SetupWizard::INPUT_PWM);
     }
@@ -72,43 +74,26 @@ bool InputPage::restartNeeded(VehicleConfigurationSource::INPUT_TYPE selectedTyp
     HwSettings *hwSettings = HwSettings::GetInstance(uavoManager);
     HwSettings::DataFields data = hwSettings->getData();
     switch (getWizard()->getControllerType()) {
-    case SetupWizard::CONTROLLER_CC:
-    case SetupWizard::CONTROLLER_CC3D:
-    {
-        switch (selectedType) {
-        case VehicleConfigurationSource::INPUT_PWM:
-            return data.CC_RcvrPort != HwSettings::CC_RCVRPORT_PWM;
-
-        case VehicleConfigurationSource::INPUT_PPM:
-            return data.CC_RcvrPort != HwSettings::CC_RCVRPORT_PPM;
-
-        case VehicleConfigurationSource::INPUT_SBUS:
-            return data.CC_MainPort != HwSettings::CC_MAINPORT_SBUS;
-
-        case VehicleConfigurationSource::INPUT_DSM:
-            // TODO: Handle all of the DSM types ?? Which is most common?
-            return data.CC_MainPort != HwSettings::CC_MAINPORT_DSM;
-
-        default: return true;
-        }
-        break;
-    }
     case SetupWizard::CONTROLLER_REVO:
     case SetupWizard::CONTROLLER_DISCOVERYF4:
+    case SetupWizard::CONTROLLER_NANO:
     {
         switch (selectedType) {
         case VehicleConfigurationSource::INPUT_PWM:
-            return data.RM_RcvrPort != HwSettings::CC_RCVRPORT_PWM;
+            return data.RM_RcvrPort != HwSettings::RM_RCVRPORT_PWM;
 
         case VehicleConfigurationSource::INPUT_PPM:
-            return data.RM_RcvrPort != HwSettings::CC_RCVRPORT_PPM;
+            return data.RM_RcvrPort != HwSettings::RM_RCVRPORT_PPM;
 
         case VehicleConfigurationSource::INPUT_SBUS:
-            return data.RM_MainPort != HwSettings::CC_MAINPORT_SBUS;
+            return data.RM_MainPort != HwSettings::RM_MAINPORT_SBUS;
+
+        case VehicleConfigurationSource::INPUT_SRXL:
+            return data.RM_FlexiPort != HwSettings::RM_FLEXIPORT_SRXL;
 
         case VehicleConfigurationSource::INPUT_DSM:
             // TODO: Handle all of the DSM types ?? Which is most common?
-            return data.RM_MainPort != HwSettings::CC_MAINPORT_DSM;
+            return data.RM_MainPort != HwSettings::RM_MAINPORT_DSM;
 
         default: return true;
         }

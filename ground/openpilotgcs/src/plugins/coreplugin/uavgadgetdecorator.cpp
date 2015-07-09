@@ -63,15 +63,22 @@ void UAVGadgetDecorator::loadConfiguration(int index)
 
 void UAVGadgetDecorator::loadConfiguration(IUAVGadgetConfiguration *config)
 {
+    if (m_activeConfiguration == config) {
+        return;
+    }
     m_activeConfiguration = config;
     int index = m_toolbar->findText(config->name());
-    m_toolbar->setCurrentIndex(index);
+    if (m_toolbar->currentIndex() != index) {
+        m_toolbar->setCurrentIndex(index);
+    }
     m_gadget->loadConfiguration(config);
 }
 
 void UAVGadgetDecorator::configurationChanged(IUAVGadgetConfiguration *config)
 {
     if (config == m_activeConfiguration) {
+        // force a configuration reload
+        m_activeConfiguration = NULL;
         loadConfiguration(config);
     }
 }
@@ -133,7 +140,6 @@ void UAVGadgetDecorator::restoreState(QSettings *qSettings)
 
     foreach(IUAVGadgetConfiguration * config, *m_configurations) {
         if (config->name() == configName) {
-            m_activeConfiguration = config;
             loadConfiguration(config);
             break;
         }

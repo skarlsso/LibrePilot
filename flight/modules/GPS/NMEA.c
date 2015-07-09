@@ -40,14 +40,13 @@
 #include "GPS.h"
 
 // #define ENABLE_DEBUG_MSG						///< define to enable debug-messages
-#define DEBUG_PORT PIOS_COM_TELEM_RF ///< defines which serial port is ued for debug-messages
-
+#define DEBUG_PORT PIOS_COM_TELEM_RF ///< defines which serial port is used for debug-messages
 
 // Debugging
 #ifdef ENABLE_DEBUG_MSG
 // #define DEBUG_MSG_IN			///< define to display the incoming NMEA messages
 // #define DEBUG_PARAMS			///< define to display the incoming NMEA messages split into its parameters
-// #define DEBUG_MGSID_IN		///< define to display the the names of the incoming NMEA messages
+// #define DEBUG_MSGID_IN		///< define to display the names of the incoming NMEA messages
 // #define NMEA_DEBUG_PKT		///< define to enable debug of all NMEA messages
 // #define NMEA_DEBUG_GGA		///< define to enable debug of GGA messages
 // #define NMEA_DEBUG_VTG		///< define to enable debug of VTG messages
@@ -68,40 +67,40 @@ struct nmea_parser {
     bool (*handler)(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
 };
 
-static bool nmeaProcessGPGGA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
-static bool nmeaProcessGPRMC(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
-static bool nmeaProcessGPVTG(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
-static bool nmeaProcessGPGSA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxGGA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxRMC(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxVTG(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxGSA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
 #if !defined(PIOS_GPS_MINIMAL)
-static bool nmeaProcessGPZDA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
-static bool nmeaProcessGPGSV(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxZDA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
+static bool nmeaProcessGxGSV(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam);
 #endif // PIOS_GPS_MINIMAL
 
 static const struct nmea_parser nmea_parsers[] = {
     {
-        .prefix  = "GPGGA",
-        .handler = nmeaProcessGPGGA,
+        .prefix  = "GGA",
+        .handler = nmeaProcessGxGGA,
     },
     {
-        .prefix  = "GPVTG",
-        .handler = nmeaProcessGPVTG,
+        .prefix  = "VTG",
+        .handler = nmeaProcessGxVTG,
     },
     {
-        .prefix  = "GPGSA",
-        .handler = nmeaProcessGPGSA,
+        .prefix  = "GSA",
+        .handler = nmeaProcessGxGSA,
     },
     {
-        .prefix  = "GPRMC",
-        .handler = nmeaProcessGPRMC,
+        .prefix  = "RMC",
+        .handler = nmeaProcessGxRMC,
     },
 #if !defined(PIOS_GPS_MINIMAL)
     {
-        .prefix  = "GPZDA",
-        .handler = nmeaProcessGPZDA,
+        .prefix  = "ZDA",
+        .handler = nmeaProcessGxZDA,
     },
     {
-        .prefix  = "GPGSV",
-        .handler = nmeaProcessGPGSV,
+        .prefix  = "GSV",
+        .handler = nmeaProcessGxGSV,
     },
 #endif // PIOS_GPS_MINIMAL
 };
@@ -112,74 +111,102 @@ int parse_nmea_stream(uint8_t *rx, uint8_t len, char *gps_rx_buffer, GPSPosition
     static uint8_t rx_count = 0;
     static bool start_flag  = false;
     static bool found_cr    = false;
+    bool goodParse = false;
     uint8_t c;
+    int i = 0;
 
-    for (int i = 0; i < len; i++) {
-        c = rx[i];
+    while (i < len) {
+        c = rx[i++];
         // detect start while acquiring stream
-        if (!start_flag && (c == '$')) { // NMEA identifier found
-            start_flag = true;
-            found_cr   = false;
-            rx_count   = 0;
-        } else if (!start_flag) {
-            return PARSER_ERROR;
+        // if we find a $ in the middle it was a bad packet (e.g. maybe UBX binary),
+        // and this may be the start of another packet
+        // silently cancel the current sentence
+        if (c == '$') { // NMEA identifier found
+            start_flag = false;
         }
-
+        if (!start_flag) { // if no NMEA identifier ('$') found yet
+            if (c == '$') { // NMEA identifier found
+                start_flag = true;
+                found_cr   = false;
+                rx_count   = 0;
+            } else {
+                // find a likely candidate for a NMEA string
+                // skip over some e.g. uBlox packets
+                uint8_t *p;
+                p = memchr(&rx[i], '$', len - i);
+                if (p) {
+                    i += p - &rx[i];
+                } else {
+                    i = len;
+                }
+                // if no more data, we can return an error
+                ret = PARSER_ERROR;
+                // loop to restart at the $ if there is one
+                continue;
+            }
+        }
         if (rx_count >= NMEA_MAX_PACKET_LENGTH) {
             // The buffer is already full and we haven't found a valid NMEA sentence.
             // Flush the buffer and note the overflow event.
             gpsRxStats->gpsRxOverflow++;
             start_flag = false;
-            found_cr   = false;
-            rx_count   = 0;
             ret = PARSER_OVERRUN;
+            continue;
         } else {
-            gps_rx_buffer[rx_count] = c;
-            rx_count++;
+            gps_rx_buffer[rx_count++] = c;
         }
 
         // look for ending '\r\n' sequence
         if (!found_cr && (c == '\r')) {
             found_cr = true;
-        } else if (found_cr && (c != '\n')) {
-            found_cr = false; // false end flag
-        } else if (found_cr && (c == '\n')) {
-            // The NMEA functions require a zero-terminated string
-            // As we detected \r\n, the string as for sure 2 bytes long, we will also strip the \r\n
-            gps_rx_buffer[rx_count - 2] = 0;
+        } else if (found_cr) {
+            if (c != '\n') {
+                found_cr = false; // false end flag
+            } else {
+                // The NMEA functions require a zero-terminated string
+                // As we detected \r\n, the string as for sure 2 bytes long, we will also strip the \r\n
+                gps_rx_buffer[rx_count - 2] = 0;
 
-            // prepare to parse next sentence
-            start_flag = false;
-            found_cr   = false;
-            rx_count   = 0;
-            // Our rxBuffer must look like this now:
-            // [0]           = '$'
-            // ...           = zero or more bytes of sentence payload
-            // [end_pos - 1] = '\r'
-            // [end_pos]     = '\n'
-            //
-            // Prepare to consume the sentence from the buffer
+                // prepare to parse next sentence
+                start_flag = false;
+                // Our rxBuffer must look like this now:
+                // [0]           = '$'
+                // ...           = zero or more bytes of sentence payload
+                // [end_pos - 1] = '\r'
+                // [end_pos]     = '\n'
+                //
+                // Prepare to consume the sentence from the buffer
 
-            // Validate the checksum over the sentence
-            if (!NMEA_checksum(&gps_rx_buffer[1])) { // Invalid checksum.  May indicate dropped characters on Rx.
-                                                     // PIOS_DEBUG_PinHigh(2);
-                gpsRxStats->gpsRxChkSumError++;
-                // PIOS_DEBUG_PinLow(2);
-                ret = PARSER_ERROR;
-            } else { // Valid checksum, use this packet to update the GPS position
-                if (!NMEA_update_position(&gps_rx_buffer[1], GpsData)) {
+                // Validate the checksum over the sentence
+                if (!NMEA_checksum(&gps_rx_buffer[1])) { // Invalid checksum.  May indicate dropped characters on Rx.
                     // PIOS_DEBUG_PinHigh(2);
-                    gpsRxStats->gpsRxParserError++;
+                    gpsRxStats->gpsRxChkSumError++;
                     // PIOS_DEBUG_PinLow(2);
-                } else {
-                    gpsRxStats->gpsRxReceived++;
-                };
-
-                ret = PARSER_COMPLETE;
+                    ret = PARSER_ERROR;
+                } else { // Valid checksum, use this packet to update the GPS position
+                    if (!NMEA_update_position(&gps_rx_buffer[1], GpsData)) {
+                        // PIOS_DEBUG_PinHigh(2);
+                        gpsRxStats->gpsRxParserError++;
+                        // PIOS_DEBUG_PinLow(2);
+                        ret = PARSER_ERROR;
+                    } else {
+                        gpsRxStats->gpsRxReceived++;
+                        goodParse = true;
+                    }
+                }
+                continue;
             }
         }
     }
-    return ret;
+
+    if (goodParse) {
+        // if so much as one good sentence we return a good status so the connection status says "alive"
+        // if we didn't do this, a lot of garbage (e.g. UBX protocol) mixed in with enough NMEA to fly
+        // might think the GPS was offline
+        return PARSER_COMPLETE;
+    } else {
+        return ret;
+    }
 }
 
 static const struct nmea_parser *NMEA_find_parser_by_prefix(const char *prefix)
@@ -373,6 +400,8 @@ bool NMEA_update_position(char *nmea_sentence, GPSPositionSensorData *GpsData)
     // Sample NMEA message: "GPRMC,000131.736,V,,,,,0.00,0.00,060180,,,N*43"
 
     // The first parameter starts at the beginning of the message
+    // Skip first two character, allow GL, GN, GP...
+    p += 2;
     params[0] = p;
     nbParams  = 1;
     while (*p != 0) {
@@ -406,11 +435,13 @@ bool NMEA_update_position(char *nmea_sentence, GPSPositionSensorData *GpsData)
     parser = NMEA_find_parser_by_prefix(params[0]);
     if (!parser) {
         // No parser found
+                #ifdef DEBUG_MSGID_IN
         DEBUG_MSG(" NO PARSER (\"%s\")\n", params[0]);
+                #endif
         return false;
     }
 
-        #ifdef DEBUG_MGSID_IN
+        #ifdef DEBUG_MSGID_IN
     DEBUG_MSG("%s %d ", params[0]);
         #endif
     // Send the message to the parser and get it update the GpsData
@@ -422,8 +453,12 @@ bool NMEA_update_position(char *nmea_sentence, GPSPositionSensorData *GpsData)
 
     if (!parser->handler(GpsData, &gpsDataUpdated, params, nbParams)) {
         // Parse failed
+                #ifdef DEBUG_MSGID_IN
         DEBUG_MSG("PARSE FAILED (\"%s\")\n", params[0]);
+                #endif
         if (gpsDataUpdated && (GpsData->Status == GPSPOSITIONSENSOR_STATUS_NOFIX)) {
+            // leave my new field alone!
+            GPSPositionSensorBaudRateGet(&GpsData->BaudRate);
             GPSPositionSensorSet(GpsData);
         }
         return false;
@@ -432,13 +467,15 @@ bool NMEA_update_position(char *nmea_sentence, GPSPositionSensorData *GpsData)
 
     // All is fine :)  Update object if data has changed
     if (gpsDataUpdated) {
-                #ifdef DEBUG_MGSID_IN
+                #ifdef DEBUG_MSGID_IN
         DEBUG_MSG("U");
                 #endif
+        // leave my new field alone!
+        GPSPositionSensorBaudRateGet(&GpsData->BaudRate);
         GPSPositionSensorSet(GpsData);
     }
 
-        #ifdef DEBUG_MGSID_IN
+        #ifdef DEBUG_MSGID_IN
     DEBUG_MSG("\n");
         #endif
     return true;
@@ -446,11 +483,11 @@ bool NMEA_update_position(char *nmea_sentence, GPSPositionSensorData *GpsData)
 
 
 /**
- * Parse an NMEA GPGGA sentence and update the given UAVObject
+ * Parse an NMEA GxGGA sentence and update the given UAVObject
  * \param[in] A pointer to a GPSPositionSensor UAVObject to be updated.
  * \param[in] An NMEA sentence with a valid checksum
  */
-static bool nmeaProcessGPGGA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxGGA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam != 15) {
         return false;
@@ -499,11 +536,11 @@ static bool nmeaProcessGPGGA(GPSPositionSensorData *GpsData, bool *gpsDataUpdate
 }
 
 /**
- * Parse an NMEA GPRMC sentence and update the given UAVObject
+ * Parse an NMEA GxRMC sentence and update the given UAVObject
  * \param[in] A pointer to a GPSPositionSensor UAVObject to be updated.
  * \param[in] An NMEA sentence with a valid checksum
  */
-static bool nmeaProcessGPRMC(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxRMC(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam != 13) {
         return false;
@@ -567,11 +604,11 @@ static bool nmeaProcessGPRMC(GPSPositionSensorData *GpsData, bool *gpsDataUpdate
 }
 
 /**
- * Parse an NMEA GPVTG sentence and update the given UAVObject
+ * Parse an NMEA GxVTG sentence and update the given UAVObject
  * \param[in] A pointer to a GPSPositionSensor UAVObject to be updated.
  * \param[in] An NMEA sentence with a valid checksum
  */
-static bool nmeaProcessGPVTG(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxVTG(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam != 9 && nbParam != 10 /*GTOP GPS seems to gemnerate an extra parameter...*/) {
         return false;
@@ -592,11 +629,11 @@ static bool nmeaProcessGPVTG(GPSPositionSensorData *GpsData, bool *gpsDataUpdate
 
 #if !defined(PIOS_GPS_MINIMAL)
 /**
- * Parse an NMEA GPZDA sentence and update the @ref GPSTime object
+ * Parse an NMEA GxZDA sentence and update the @ref GPSTime object
  * \param[in] A pointer to a GPSPositionSensor UAVObject to be updated (unused).
  * \param[in] An NMEA sentence with a valid checksum
  */
-static bool nmeaProcessGPZDA(__attribute__((unused)) GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxZDA(__attribute__((unused)) GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam != 7) {
         return false;
@@ -636,7 +673,7 @@ static uint8_t gsv_processed_mask;
 static uint16_t gsv_incomplete_error;
 static uint16_t gsv_duplicate_error;
 
-static bool nmeaProcessGPGSV(__attribute__((unused)) GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxGSV(__attribute__((unused)) GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam < 4) {
         return false;
@@ -723,7 +760,7 @@ static bool nmeaProcessGPGSV(__attribute__((unused)) GPSPositionSensorData *GpsD
  * \param[in] A pointer to a GPSPositionSensor UAVObject to be updated.
  * \param[in] An NMEA sentence with a valid checksum
  */
-static bool nmeaProcessGPGSA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
+static bool nmeaProcessGxGSA(GPSPositionSensorData *GpsData, bool *gpsDataUpdated, char *param[], uint8_t nbParam)
 {
     if (nbParam != 18) {
         return false;

@@ -32,9 +32,9 @@ if [ -x "$1" ]; then
 fi
 
 # Tools URLs to fetch
-WGET_URL="http://wiki.openpilot.org/download/attachments/18612236/wget.exe"
-MAKE_URL="http://wiki.openpilot.org/download/attachments/18612236/make.exe"
-SEVENZIP_URL="http://wiki.openpilot.org/download/attachments/18612236/7za.exe"
+WGET_URL="http://librepilot.github.io/tools/wget.exe"
+MAKE_URL="http://librepilot.github.io/tools/make.exe"
+SEVENZIP_URL="http://librepilot.github.io/tools/7za.exe"
 
 # Expected tools paths
 WGET="$TOOLS_DIR/bin/`basename \"$WGET_URL\"`"
@@ -87,7 +87,7 @@ if [ ! -x "$MAKE" ]; then
     echo "$SCRIPT_NAME: $MAKE_NAME not found, fetching from $MAKE_URL"
     MAKE_DIR="`dirname \"$MAKE\"`"
     mkdir -p "$MAKE_DIR"
-    $WGET -N --content-disposition -P "$MAKE_DIR" "$MAKE_URL"
+    $WGET --no-check-certificate -N --content-disposition -P "$MAKE_DIR" "$MAKE_URL"
     if [ $? -ne 0 ]; then
         echo "$SCRIPT_NAME: $MAKE_NAME fetch error, hope it's in the path..."
         MAKE_NAME="`basename \"$MAKE\"`"
@@ -100,7 +100,7 @@ if [ ! -x "$SEVENZIP" ]; then
     echo "$SCRIPT_NAME: $SEVENZIP_NAME not found, fetching from $SEVENZIP_URL"
     SEVENZIP_DIR="`dirname \"$SEVENZIP\"`"
     mkdir -p "$SEVENZIP_DIR"
-    $WGET -N --content-disposition -P "$SEVENZIP_DIR" "$SEVENZIP_URL"
+    $WGET --no-check-certificate -N --content-disposition -P "$SEVENZIP_DIR" "$SEVENZIP_URL"
     if [ $? -ne 0 ]; then
         echo "$SCRIPT_NAME: $SEVENZIP_NAME fetch error, hope it's in the path..."
         SEVENZIP_NAME="`basename \"$SEVENZIP\"`"

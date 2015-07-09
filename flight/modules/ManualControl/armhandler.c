@@ -35,9 +35,13 @@
 #include <flightstatus.h>
 #include <flightmodesettings.h>
 #include <stabilizationdesired.h>
+#ifndef PIOS_EXCLUDE_ADVANCED_FEATURES
+#include <statusvtolland.h>
+#endif
 
 // Private constants
-#define ARMED_THRESHOLD 0.50f
+#define ARMED_THRESHOLD     0.50f
+#define GROUND_LOW_THROTTLE 0.01f
 
 // Private types
 typedef enum {
@@ -62,7 +66,7 @@ static bool forcedDisArm(void);
  * @input: ManualControlCommand, AccessoryDesired
  * @output: FlightStatus.Arming
  */
-void armHandler(bool newinit)
+void armHandler(bool newinit, FrameType_t frameType)
 {
     static ArmState_t armState;
 
@@ -82,7 +86,12 @@ void armHandler(bool newinit)
 
     bool lowThrottle = cmd.Throttle < 0;
 
-    bool armSwitch   = false;
+    if (frameType == FRAME_TYPE_GROUND) {
+        // Deadbanding applied in receiver.c typically at 2% but we don't assume its enabled.
+        lowThrottle = fabsf(cmd.Throttle) < GROUND_LOW_THROTTLE;
+    }
+
+    bool armSwitch = false;
 
     switch (settings.Arming) {
     case FLIGHTMODESETTINGS_ARMING_ACCESSORY0:
@@ -108,6 +117,7 @@ void armHandler(bool newinit)
 
     if (forcedDisArm()) {
         // PathPlanner forces explicit disarming due to error condition (crash, impact, fire, ...)
+        armState = ARM_STATE_DISARMED;
         setArmedIfChanged(FLIGHTSTATUS_ARMED_DISARMED);
         return;
     }
@@ -172,6 +182,8 @@ void armHandler(bool newinit)
     case FLIGHTMODESETTINGS_ARMING_ACCESSORY1:
     case FLIGHTMODESETTINGS_ARMING_ACCESSORY2:
         armingInputLevel = -1.0f * acc.AccessoryVal;
+        break;
+    default:
         break;
     }
 
@@ -304,6 +316,12 @@ static bool okToArm(void)
         return true;
 
         break;
+    case FLIGHTSTATUS_FLIGHTMODE_LAND:
+        return false;
+
+    case FLIGHTSTATUS_FLIGHTMODE_AUTOTAKEOFF:
+    case FLIGHTSTATUS_FLIGHTMODE_PATHPLANNER:
+        return true;
 
     default:
         return false;
@@ -328,6 +346,7 @@ static bool forcedDisArm(void)
     if (alarms.Receiver == SYSTEMALARMS_ALARM_CRITICAL) {
         return true;
     }
+
     return false;
 }
 

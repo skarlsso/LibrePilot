@@ -26,9 +26,9 @@ SOURCES = version_info.cpp
 
     # Create custom version_info target which generates a real file
     version_info.target   = $$VERSION_INFO_FILE
-    version_info.commands = -$(MKDIR) $$targetPath($$VERSION_INFO_DIR) $$addNewline()
+    version_info.commands = -$(MKDIR) $$VERSION_INFO_DIR $$addNewline()
     version_info.commands += $$VERSION_INFO_COMMAND \
-                                    --path=\"$$GCS_SOURCE_TREE\" \
+                                    --path=\"$$ROOT_DIR\" \
                                     --template=\"$$VERSION_INFO_TEMPLATE\" \
                                     --uavodir=\"$$UAVO_DEF_PATH\" \
                                     --outfile=\"$$VERSION_INFO_FILE\"

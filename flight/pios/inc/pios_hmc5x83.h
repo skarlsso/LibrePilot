@@ -31,6 +31,7 @@
 #ifndef PIOS_HMC5x83_H
 #define PIOS_HMC5x83_H
 #include <stdint.h>
+#include <pios_sensors.h>
 /* HMC5x83 Addresses */
 #define PIOS_HMC5x83_I2C_ADDR           0x1E
 #define PIOS_HMC5x83_I2C_READ_ADDR      0x3D
@@ -108,6 +109,18 @@ extern const struct pios_hmc5x83_io_driver PIOS_HMC5x83_SPI_DRIVER;
 #ifdef PIOS_INCLUDE_I2C
 extern const struct pios_hmc5x83_io_driver PIOS_HMC5x83_I2C_DRIVER;
 #endif
+// xyz axis orientation
+enum PIOS_HMC5X83_ORIENTATION {
+    PIOS_HMC5X83_ORIENTATION_EAST_NORTH_UP,
+    PIOS_HMC5X83_ORIENTATION_SOUTH_EAST_UP,
+    PIOS_HMC5X83_ORIENTATION_WEST_SOUTH_UP,
+    PIOS_HMC5X83_ORIENTATION_NORTH_WEST_UP,
+    PIOS_HMC5X83_ORIENTATION_EAST_SOUTH_DOWN,
+    PIOS_HMC5X83_ORIENTATION_SOUTH_WEST_DOWN,
+    PIOS_HMC5X83_ORIENTATION_WEST_NORTH_DOWN,
+    PIOS_HMC5X83_ORIENTATION_NORTH_EAST_DOWN,
+};
+
 
 struct pios_hmc5x83_cfg {
 #ifdef PIOS_HMC5X83_HAS_GPIOS
@@ -118,16 +131,21 @@ struct pios_hmc5x83_cfg {
     uint8_t Gain; // Gain Configuration, select the full scale --> here below the relative define (See datasheet page 11 for more details) */
     uint8_t Mode;
     bool    TempCompensation; // enable temperature sensor on HMC5983 for temperature gain compensation
+    enum PIOS_HMC5X83_ORIENTATION Orientation;
     const struct pios_hmc5x83_io_driver *Driver;
 };
 
 /* Public Functions */
 extern pios_hmc5x83_dev_t PIOS_HMC5x83_Init(const struct pios_hmc5x83_cfg *cfg, uint32_t port_id, uint8_t device_num);
+extern void PIOS_HMC5x83_Register(pios_hmc5x83_dev_t handler);
+
 extern bool PIOS_HMC5x83_NewDataAvailable(pios_hmc5x83_dev_t handler);
 extern int32_t PIOS_HMC5x83_ReadMag(pios_hmc5x83_dev_t handler, int16_t out[3]);
 extern uint8_t PIOS_HMC5x83_ReadID(pios_hmc5x83_dev_t handler, uint8_t out[4]);
 extern int32_t PIOS_HMC5x83_Test(pios_hmc5x83_dev_t handler);
 extern bool PIOS_HMC5x83_IRQHandler(pios_hmc5x83_dev_t handler);
+
+extern const PIOS_SENSORS_Driver PIOS_HMC5x83_Driver;
 
 #endif /* PIOS_HMC5x83_H */
 

@@ -24,6 +24,9 @@ endif
 include ../board-info.mk
 include $(ROOT_DIR)/make/firmware-defs.mk
 
+# REVO C++ support 
+USE_CXX = YES
+
 # ARM DSP library
 USE_DSP_LIB ?= NO
 
@@ -70,13 +73,15 @@ ifndef TESTAPP
     ## Application Core
     SRC += ../pios_usb_board_data.c
     SRC += $(OPMODULEDIR)/System/systemmod.c
-    SRC += $(OPSYSTEM)/discoveryf4bare.c
+    CPPSRC += $(OPSYSTEM)/discoveryf4bare.cpp
     SRC += $(OPSYSTEM)/pios_board.c
     SRC += $(FLIGHTLIB)/alarms.c
     SRC += $(OPUAVTALK)/uavtalk.c
     SRC += $(OPUAVOBJ)/uavobjectmanager.c
     SRC += $(OPUAVOBJ)/uavobjectpersistence.c
     SRC += $(OPUAVOBJ)/eventdispatcher.c
+    SRC += $(PIOSCOMMON)/pios_flashfs_logfs.c
+    SRC += $(PIOSCOMMON)/pios_flash_jedec.c
     
     #ifeq ($(DEBUG), YES)
     SRC += $(OPSYSTEM)/dcc_stdio.c
@@ -91,6 +96,7 @@ ifndef TESTAPP
     SRC += $(FLIGHTLIB)/insgps13state.c
     SRC += $(FLIGHTLIB)/auxmagsupport.c
     SRC += $(FLIGHTLIB)/lednotification.c    
+    CPPSRC += $(FLIGHTLIB)/mini_cpp.cpp
 
     ## UAVObjects
     include ./UAVObjects.inc

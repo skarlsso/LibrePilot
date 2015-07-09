@@ -33,6 +33,10 @@ FLIGHTLIBINC	= $(FLIGHTLIB)/inc
 OPUAVOBJINC	= $(OPUAVOBJ)/inc
 OPUAVTALKINC	= $(OPUAVTALK)/inc
 
+## PID 
+PIDLIB		=$(FLIGHTLIB)/pid
+PIDLIBINC	=$(FLIGHTLIB)/pid
+
 ## Math
 MATHLIB		= $(FLIGHTLIB)/math
 MATHLIBINC	= $(FLIGHTLIB)/math
@@ -72,6 +76,7 @@ SRC += $(PIOSCOMMON)/pios_hmc5x83.c
 SRC += $(PIOSCOMMON)/pios_i2c_esc.c
 SRC += $(PIOSCOMMON)/pios_l3gd20.c
 SRC += $(PIOSCOMMON)/pios_mpu6000.c
+SRC += $(PIOSCOMMON)/pios_mpu9250.c
 SRC += $(PIOSCOMMON)/pios_mpxv.c
 SRC += $(PIOSCOMMON)/pios_ms4525do.c
 SRC += $(PIOSCOMMON)/pios_ms5611.c
@@ -82,17 +87,20 @@ SRC += $(PIOSCOMMON)/pios_rfm22b.c
 SRC += $(PIOSCOMMON)/pios_rfm22b_com.c
 SRC += $(PIOSCOMMON)/pios_rcvr.c
 SRC += $(PIOSCOMMON)/pios_sbus.c
+SRC += $(PIOSCOMMON)/pios_srxl.c
 SRC += $(PIOSCOMMON)/pios_sdcard.c
+SRC += $(PIOSCOMMON)/pios_sensors.c
 
 ## Misc library functions
 SRC += $(FLIGHTLIB)/sanitycheck.c
 SRC += $(FLIGHTLIB)/CoordinateConversions.c
 SRC += $(MATHLIB)/sin_lookup.c
+
+## PID library functions
 SRC += $(MATHLIB)/pid.c
+CPPSRC += $(PIDLIB)/pidcontroldown.cpp
 
 ## PIOS Hardware (Common)
-SRC += $(PIOSCOMMON)/pios_flashfs_logfs.c
-SRC += $(PIOSCOMMON)/pios_flash_jedec.c
 SRC += $(PIOSCOMMON)/pios_debuglog.c
 endif
 
@@ -125,6 +133,7 @@ SRC += $(FLIGHTLIB)/optypes.c
 
 ## Modules
 SRC += $(foreach mod, $(MODULES), $(sort $(wildcard $(OPMODULEDIR)/$(mod)/*.c)))
+CPPSRC += $(foreach mod, $(MODULES), $(sort $(wildcard $(OPMODULEDIR)/$(mod)/*.cpp)))
 SRC += $(foreach mod, $(OPTMODULES), $(sort $(wildcard $(OPMODULEDIR)/$(mod)/*.c)))
 
 # Declare all non-optional modules as built-in to force inclusion.
@@ -166,6 +175,7 @@ EXTRAINCDIRS += $(FLIGHTLIBINC)
 EXTRAINCDIRS += $(PIOSCOMMON)
 EXTRAINCDIRS += $(OPSYSTEMINC)
 EXTRAINCDIRS += $(MATHLIBINC)
+EXTRAINCDIRS += $(PIDLIBINC)
 EXTRAINCDIRS += $(OPUAVOBJINC)
 EXTRAINCDIRS += $(OPUAVTALKINC)
 EXTRAINCDIRS += $(OPUAVSYNTHDIR)

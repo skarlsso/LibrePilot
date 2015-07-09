@@ -33,7 +33,7 @@
 
 struct pios_ext_leds_driver;
 
-#define PIOS_WS2811_NUMLEDS 2
+#define PIOS_WS2811_NUMLEDS 10
 
 const struct pios_ext_leds_driver *PIOS_WS2811_Driver();
 

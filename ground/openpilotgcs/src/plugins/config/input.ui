@@ -116,8 +116,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>774</width>
-            <height>497</height>
+            <width>1220</width>
+            <height>655</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout">
@@ -274,82 +274,7 @@
                   </item>
                  </layout>
                 </widget>
-                <widget class="QWidget" name="wizard">
-                 <layout class="QVBoxLayout" name="verticalLayout_5">
-                  <property name="leftMargin">
-                   <number>12</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>12</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>12</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>12</number>
-                  </property>
-                  <item>
-                   <widget class="QLabel" name="wzText">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="wordWrap">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <layout class="QVBoxLayout" name="radioButtonsLayout"/>
-                  </item>
-                  <item>
-                   <layout class="QGridLayout" name="checkBoxesLayout"/>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="wzText2">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="wordWrap">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGraphicsView" name="graphicsView"/>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_3">
-                    <item>
-                     <widget class="QPushButton" name="wzBack">
-                      <property name="text">
-                       <string>Back</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="wzNext">
-                      <property name="text">
-                       <string>Next</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="wzCancel">
-                      <property name="text">
-                       <string>Cancel</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
+                <widget class="QWidget" name="wizard"/>
                </widget>
               </item>
              </layout>
@@ -565,8 +490,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>730</width>
-            <height>554</height>
+            <width>1220</width>
+            <height>655</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_7" rowstretch="1,0,0,0">
@@ -797,13 +722,13 @@ font:bold;</string>
                <widget class="QFrame" name="frame_3">
                 <property name="minimumSize">
                  <size>
-                  <width>106</width>
+                  <width>90</width>
                   <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>105</width>
+                  <width>90</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -1201,13 +1126,13 @@ font:bold;</string>
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>230</height>
+               <height>275</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>230</height>
+               <height>275</height>
               </size>
              </property>
              <property name="title">
@@ -1423,7 +1348,7 @@ font:bold;</string>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>150</height>
+                     <height>200</height>
                     </size>
                    </property>
                    <property name="focusPolicy">
@@ -1833,6 +1758,12 @@ font:bold;</string>
               </item>
               <item row="1" column="12">
                <widget class="QSpinBox" name="fmsPosNum">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>29</height>
+                 </size>
+                </property>
                 <property name="toolTip">
                  <string>Number of positions your FlightMode switch has.
 
@@ -1870,7 +1801,7 @@ channel value for each flight mode.</string>
                  </font>
                 </property>
                 <property name="text">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Avoid &amp;quot;Manual&amp;quot; for multirotors! Never select &amp;quot;Altitude&amp;quot;, &amp;quot;VelocityControl&amp;quot; or &amp;quot;CruiseControl&amp;quot; on a fixed wing!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Never select &amp;quot;Manual&amp;quot; as Flight Mode when flying a multitrotor! Never select &amp;quot;Altitude&amp;quot; or &amp;quot;CruiseControl&amp;quot; in Stabilization Modes when using a fixed wing!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -2029,14 +1960,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:0</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2055,14 +1986,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:1</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2081,14 +2012,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:2</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2110,14 +2041,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:3</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2139,14 +2070,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:4</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2168,14 +2099,14 @@ font:bold;</string>
                     <enum>Qt::StrongFocus</enum>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Assisted Control options augment the primary flight mode.  GPSAssist adds brake/hold to Stabilization and PositionHold.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPSAssist adds a brake/hold sequence to Stabilization when pitch &amp; roll is centered, and on initiation of PositionHold. GPSAssist also enables pitch &amp; roll control during the auto landing flight mode.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="objrelation" stdset="0">
                     <stringlist>
                      <string>objname:StabilizationSettings</string>
                      <string>fieldname:FlightModeAssistMap</string>
                      <string>index:5</string>
-                     <string>haslimits:no</string>
+                     <string>haslimits:yes</string>
                      <string>scale:1</string>
                      <string>buttongroup:16</string>
                     </stringlist>
@@ -2288,8 +2219,8 @@ font:bold;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>544</width>
-            <height>169</height>
+            <width>1220</width>
+            <height>655</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -2551,10 +2482,6 @@ Applies and Saves all settings to SD</string>
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>deadband</tabstop>
-  <tabstop>graphicsView</tabstop>
-  <tabstop>wzBack</tabstop>
-  <tabstop>wzNext</tabstop>
-  <tabstop>wzCancel</tabstop>
   <tabstop>armControl</tabstop>
   <tabstop>armTimeout</tabstop>
   <tabstop>inputHelp</tabstop>

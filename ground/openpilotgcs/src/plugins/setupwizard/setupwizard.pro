@@ -31,7 +31,6 @@ HEADERS += setupwizardplugin.h \
     connectiondiagram.h \
     pages/outputcalibrationpage.h \
     outputcalibrationutil.h \
-    pages/rebootpage.h \
     pages/savepage.h \
     pages/autoupdatepage.h \
     pages/revocalibrationpage.h \
@@ -42,7 +41,8 @@ HEADERS += setupwizardplugin.h \
     pages/servopage.h \
     pages/selectionpage.h \
     pages/airframeinitialtuningpage.h \
-    vehicletemplateexportdialog.h
+    vehicletemplateexportdialog.h \
+    vehicletemplateselectorwidget.h
 
 SOURCES += setupwizardplugin.cpp \
     setupwizard.cpp \
@@ -65,7 +65,6 @@ SOURCES += setupwizardplugin.cpp \
     connectiondiagram.cpp \
     pages/outputcalibrationpage.cpp \
     outputcalibrationutil.cpp \
-    pages/rebootpage.cpp \
     pages/savepage.cpp \
     pages/autoupdatepage.cpp \
     pages/revocalibrationpage.cpp \
@@ -76,7 +75,8 @@ SOURCES += setupwizardplugin.cpp \
     pages/servopage.cpp \
     pages/selectionpage.cpp \
     pages/airframeinitialtuningpage.cpp \
-    vehicletemplateexportdialog.cpp
+    vehicletemplateexportdialog.cpp \
+    vehicletemplateselectorwidget.cpp
 
 OTHER_FILES += SetupWizard.pluginspec
 
@@ -92,7 +92,6 @@ FORMS += \
     pages/summarypage.ui \
     connectiondiagram.ui \
     pages/outputcalibrationpage.ui \
-    pages/rebootpage.ui \
     pages/savepage.ui \
     pages/autoupdatepage.ui \
     pages/revocalibrationpage.ui \
@@ -102,7 +101,8 @@ FORMS += \
     pages/servopage.ui \
     pages/selectionpage.ui \
     pages/airframeinitialtuningpage.ui \
-    vehicletemplateexportdialog.ui
+    vehicletemplateexportdialog.ui \
+    vehicletemplateselectorwidget.ui
 
 RESOURCES += \
     wizardResources.qrc

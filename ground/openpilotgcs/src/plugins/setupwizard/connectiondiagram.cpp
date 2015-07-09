@@ -81,10 +81,6 @@ void ConnectionDiagram::setupGraphicsScene()
         QList<QString> elementsToShow;
 
         switch (m_configSource->getControllerType()) {
-        case VehicleConfigurationSource::CONTROLLER_CC:
-        case VehicleConfigurationSource::CONTROLLER_CC3D:
-            elementsToShow << "controller-cc";
-            break;
         case VehicleConfigurationSource::CONTROLLER_REVO:
             elementsToShow << "controller-revo";
             break;
@@ -162,18 +158,30 @@ void ConnectionDiagram::setupGraphicsScene()
         }
 
         QString prefix = "";
-        if (m_configSource->getControllerType() == VehicleConfigurationSource::CONTROLLER_NANO) {
+        QString suffix = "";
+        switch (m_configSource->getControllerType()) {
+        case VehicleConfigurationSource::CONTROLLER_REVO:
+            prefix = "revo-";
+            break;
+        case VehicleConfigurationSource::CONTROLLER_NANO:
             prefix = "nano-";
+            break;
+        default:
+            break;
         }
+
         switch (m_configSource->getInputType()) {
         case VehicleConfigurationSource::INPUT_PWM:
             elementsToShow << QString("%1pwm").arg(prefix);
             break;
         case VehicleConfigurationSource::INPUT_PPM:
-            elementsToShow << QString("%1ppm").arg(prefix);
+            elementsToShow << QString("%1ppm%2").arg(prefix).arg(suffix);
             break;
         case VehicleConfigurationSource::INPUT_SBUS:
             elementsToShow << QString("%1sbus").arg(prefix);
+            break;
+        case VehicleConfigurationSource::INPUT_SRXL:
+            elementsToShow << QString("%1srxl").arg(prefix);
             break;
         case VehicleConfigurationSource::INPUT_DSM:
             elementsToShow << QString("%1satellite").arg(prefix);

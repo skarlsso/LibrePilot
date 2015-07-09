@@ -135,12 +135,13 @@ static const struct pios_exti_cfg pios_exti_hmc5x83_cfg __exti_config = {
 };
 
 static const struct pios_hmc5x83_cfg pios_hmc5x83_cfg = {
-    .exti_cfg  = &pios_exti_hmc5x83_cfg,
-    .M_ODR     = PIOS_HMC5x83_ODR_75,
-    .Meas_Conf = PIOS_HMC5x83_MEASCONF_NORMAL,
-    .Gain      = PIOS_HMC5x83_GAIN_1_9,
-    .Mode      = PIOS_HMC5x83_MODE_CONTINUOUS,
-    .Driver    = &PIOS_HMC5x83_I2C_DRIVER,
+    .exti_cfg    = &pios_exti_hmc5x83_cfg,
+    .M_ODR       = PIOS_HMC5x83_ODR_75,
+    .Meas_Conf   = PIOS_HMC5x83_MEASCONF_NORMAL,
+    .Gain        = PIOS_HMC5x83_GAIN_1_9,
+    .Mode        = PIOS_HMC5x83_MODE_CONTINUOUS,
+    .Driver      = &PIOS_HMC5x83_I2C_DRIVER,
+    .Orientation = PIOS_HMC5X83_ORIENTATION_EAST_NORTH_UP,
 };
 #endif /* PIOS_INCLUDE_HMC5X83 */
 
@@ -209,7 +210,7 @@ static const struct pios_mpu6000_cfg pios_mpu6000_cfg = {
     .orientation    = PIOS_MPU6000_TOP_180DEG,
     .fast_prescaler = PIOS_SPI_PRESCALER_4,
     .std_prescaler  = PIOS_SPI_PRESCALER_64,
-    .max_downsample = 16,
+    .max_downsample = 20,
 };
 #endif /* PIOS_INCLUDE_MPU6000 */
 
@@ -501,6 +502,27 @@ void PIOS_Board_Init(void)
     case HWSETTINGS_RM_FLEXIPORT_OSDHK:
         PIOS_Board_configure_com(&pios_usart_hkosd_flexi_cfg, PIOS_COM_HKOSD_RX_BUF_LEN, PIOS_COM_HKOSD_TX_BUF_LEN, &pios_usart_com_driver, &pios_com_hkosd_id);
         break;
+    case HWSETTINGS_RM_FLEXIPORT_SRXL:
+#if defined(PIOS_INCLUDE_SRXL)
+        {
+            uint32_t pios_usart_srxl_id;
+            if (PIOS_USART_Init(&pios_usart_srxl_id, &pios_usart_srxl_flexi_cfg)) {
+                PIOS_Assert(0);
+            }
+
+            uint32_t pios_srxl_id;
+            if (PIOS_SRXL_Init(&pios_srxl_id, &pios_usart_com_driver, pios_usart_srxl_id)) {
+                PIOS_Assert(0);
+            }
+
+            uint32_t pios_srxl_rcvr_id;
+            if (PIOS_RCVR_Init(&pios_srxl_rcvr_id, &pios_srxl_rcvr_driver, pios_srxl_id)) {
+                PIOS_Assert(0);
+            }
+            pios_rcvr_group_map[MANUALCONTROLSETTINGS_CHANNELGROUPS_SRXL] = pios_srxl_rcvr_id;
+        }
+#endif
+        break;
     } /* hwsettings_rm_flexiport */
 
     /* Moved this here to allow binding on flexiport */
@@ -743,10 +765,7 @@ void PIOS_Board_Init(void)
                           tx_buffer, PIOS_COM_RFM22B_RF_TX_BUF_LEN)) {
             PIOS_Assert(0);
         }
-        /* Set Telemetry to use OPLinkMini if no other telemetry is configured (USB always overrides anyway) */
-        if (!pios_com_telem_rf_id) {
-            pios_com_telem_rf_id = pios_com_rf_id;
-        }
+
         oplinkStatus.LinkState = OPLINKSTATUS_LINKSTATE_ENABLED;
 
         // Set the RF data rate on the modem to ~2X the selected buad rate because the modem is half duplex.
@@ -773,11 +792,11 @@ void PIOS_Board_Init(void)
         }
 
         /* Set the radio configuration parameters. */
-        PIOS_RFM22B_SetChannelConfig(pios_rfm22b_id, datarate, oplinkSettings.MinChannel, oplinkSettings.MaxChannel, oplinkSettings.ChannelSet, is_coordinator, is_oneway, ppm_mode, ppm_only);
         PIOS_RFM22B_SetCoordinatorID(pios_rfm22b_id, oplinkSettings.CoordID);
+        PIOS_RFM22B_SetChannelConfig(pios_rfm22b_id, datarate, oplinkSettings.MinChannel, oplinkSettings.MaxChannel, is_coordinator, is_oneway, ppm_mode, ppm_only);
 
         /* Set the PPM callback if we should be receiving PPM. */
-        if (ppm_mode) {
+        if (ppm_mode || (ppm_only && !is_coordinator)) {
             PIOS_RFM22B_SetPPMCallback(pios_rfm22b_id, PIOS_Board_PPM_callback);
         }
 
@@ -877,12 +896,13 @@ void PIOS_Board_Init(void)
     case HWSETTINGS_RM_RCVRPORT_TELEMETRY:
         PIOS_Board_configure_com(&pios_usart_rcvrport_cfg, PIOS_COM_TELEM_RF_RX_BUF_LEN, PIOS_COM_TELEM_RF_TX_BUF_LEN, &pios_usart_com_driver, &pios_com_telem_rf_id);
         break;
-
     case HWSETTINGS_RM_RCVRPORT_APA102LEDS:
         enable_apa102_leds = true;
         break;
+    case HWSETTINGS_RM_RCVRPORT_COMBRIDGE:
+        PIOS_Board_configure_com(&pios_usart_rcvrport_cfg, PIOS_COM_BRIDGE_RX_BUF_LEN, PIOS_COM_BRIDGE_TX_BUF_LEN, &pios_usart_com_driver, &pios_com_bridge_id);
+        break;
     }
-
 
 #if defined(PIOS_INCLUDE_GCSRCVR)
     GCSReceiverInitialize();
@@ -935,17 +955,20 @@ void PIOS_Board_Init(void)
     PIOS_ADC_Init(&pios_adc_cfg);
 #endif
 
+#if defined(PIOS_INCLUDE_MPU6000)
+    PIOS_MPU6000_Init(pios_spi_gyro_id, 0, &pios_mpu6000_cfg);
+    PIOS_MPU6000_CONFIG_Configure();
+    PIOS_MPU6000_Register();
+#endif
+
 #if defined(PIOS_INCLUDE_HMC5X83)
     onboard_mag = PIOS_HMC5x83_Init(&pios_hmc5x83_cfg, pios_i2c_mag_pressure_adapter_id, 0);
+    PIOS_HMC5x83_Register(onboard_mag);
 #endif
 
 #if defined(PIOS_INCLUDE_MS5611)
     PIOS_MS5611_Init(&pios_ms5611_cfg, pios_i2c_mag_pressure_adapter_id);
-#endif
-
-#if defined(PIOS_INCLUDE_MPU6000)
-    PIOS_MPU6000_Init(pios_spi_gyro_id, 0, &pios_mpu6000_cfg);
-    PIOS_MPU6000_CONFIG_Configure();
+    PIOS_MS5611_Register();
 #endif
 
 #ifdef PIOS_INCLUDE_APA102
@@ -980,8 +1003,18 @@ void PIOS_Board_Init(void)
             LedNotificationExtLedsInit(pios_ws2811_id);
         }
     }
-
 #endif // PIOS_INCLUDE_WS2811
+#ifdef PIOS_INCLUDE_ADC
+    {
+        uint8_t adc_config[HWSETTINGS_ADCROUTING_NUMELEM];
+        HwSettingsADCRoutingArrayGet(adc_config);
+        for (uint32_t i = 0; i < HWSETTINGS_ADCROUTING_NUMELEM; i++) {
+            if (adc_config[i] != HWSETTINGS_ADCROUTING_DISABLED) {
+                PIOS_ADC_PinSetup(i);
+            }
+        }
+    }
+#endif // PIOS_INCLUDE_ADC
 }
 
 /**

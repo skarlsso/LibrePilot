@@ -44,7 +44,6 @@
 #include "pages/summarypage.h"
 #include "pages/savepage.h"
 #include "pages/notyetimplementedpage.h"
-#include "pages/rebootpage.h"
 #include "pages/outputcalibrationpage.h"
 #include "pages/revocalibrationpage.h"
 #include "pages/airframeinitialtuningpage.h"
@@ -96,11 +95,14 @@ int SetupWizard::nextId() const
     case PAGE_CONTROLLER:
     {
         switch (getControllerType()) {
-        case CONTROLLER_CC:
-        case CONTROLLER_CC3D:
         case CONTROLLER_REVO:
-        case CONTROLLER_NANO:
         case CONTROLLER_DISCOVERYF4:
+            return PAGE_INPUT;
+
+        case CONTROLLER_NANO:
+            if (isRestartNeeded()) {
+                reboot();
+            }
             return PAGE_INPUT;
 
         case CONTROLLER_OPLINK:
@@ -141,11 +143,8 @@ int SetupWizard::nextId() const
     case PAGE_INPUT:
         if (isRestartNeeded()) {
             saveHardwareSettings();
-            return PAGE_REBOOT;
-        } else {
-            return PAGE_VEHICLES;
+            reboot();
         }
-    case PAGE_REBOOT:
         return PAGE_VEHICLES;
 
     case PAGE_ESC:
@@ -208,8 +207,6 @@ int SetupWizard::nextId() const
     case PAGE_SUMMARY:
     {
         switch (getControllerType()) {
-        case CONTROLLER_CC:
-        case CONTROLLER_CC3D:
         case CONTROLLER_REVO:
         case CONTROLLER_NANO:
         case CONTROLLER_DISCOVERYF4:
@@ -241,12 +238,6 @@ QString SetupWizard::getSummaryText()
 
     summary.append("<b>").append(tr("Controller type: ")).append("</b>");
     switch (getControllerType()) {
-    case CONTROLLER_CC:
-        summary.append(tr("OpenPilot CopterControl"));
-        break;
-    case CONTROLLER_CC3D:
-        summary.append(tr("OpenPilot CopterControl 3D"));
-        break;
     case CONTROLLER_REVO:
         summary.append(tr("OpenPilot Revolution"));
         break;
@@ -389,6 +380,12 @@ QString SetupWizard::getSummaryText()
     case ESC_RAPID:
         summary.append(tr("Rapid ESC (%1 Hz)").arg(VehicleConfigurationHelper::RAPID_ESC_FREQUENCY));
         break;
+    case ESC_SYNCHED:
+        summary.append(tr("Synched ESC"));
+        break;
+    case ESC_ONESHOT:
+        summary.append(tr("Oneshot ESC"));
+        break;
     default:
         summary.append(tr("Unknown"));
     }
@@ -470,7 +467,6 @@ void SetupWizard::createPages()
     setPage(PAGE_OUTPUT_CALIBRATION, new OutputCalibrationPage(this));
     setPage(PAGE_SUMMARY, new SummaryPage(this));
     setPage(PAGE_SAVE, new SavePage(this));
-    setPage(PAGE_REBOOT, new RebootPage(this));
     setPage(PAGE_NOTYETIMPLEMENTED, new NotYetImplementedPage(this));
     setPage(PAGE_AIRFRAME_INITIAL_TUNING, new AirframeInitialTuningPage(this));
     setPage(PAGE_END, new OPEndPage(this));
@@ -491,6 +487,9 @@ void SetupWizard::customBackClicked()
         static_cast<OutputCalibrationPage *>(currentPage())->customBackClicked();
     } else {
         back();
+        if (currentId() == PAGE_OUTPUT_CALIBRATION) {
+            static_cast<OutputCalibrationPage *>(currentPage())->customBackClicked();
+        }
     }
 }
 
@@ -498,6 +497,23 @@ void SetupWizard::pageChanged(int currId)
 {
     button(QWizard::CustomButton1)->setVisible(currId != PAGE_START);
     button(QWizard::CancelButton)->setVisible(currId != PAGE_END);
+}
+
+void SetupWizard::reboot() const
+{
+    SetupWizard *wiz = const_cast<SetupWizard *>(this);
+
+    wiz->setWindowFlags(wiz->windowFlags() & ~Qt::WindowStaysOnTopHint);
+
+    ExtensionSystem::PluginManager *pm = ExtensionSystem::PluginManager::instance();
+    Q_ASSERT(pm);
+    UploaderGadgetFactory *uploader    = pm->getObject<UploaderGadgetFactory>();
+    Q_ASSERT(uploader);
+    uploader->reboot();
+
+    wiz->setRestartNeeded(false);
+    wiz->setWindowFlags(wiz->windowFlags() | Qt::WindowStaysOnTopHint);
+    wiz->show();
 }
 
 bool SetupWizard::saveHardwareSettings() const

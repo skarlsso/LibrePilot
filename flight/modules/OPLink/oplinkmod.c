@@ -66,6 +66,7 @@
 static xTaskHandle systemTaskHandle;
 static bool stackOverflow;
 static bool mallocFailed;
+volatile int initTaskDone = 0;
 
 // Private functions
 static void systemTask(void *parameters);
@@ -113,6 +114,9 @@ static void systemTask(__attribute__((unused)) void *parameters)
     uint16_t prev_rx_count = 0;
     bool first_time = true;
 
+    while (!initTaskDone) {
+        vTaskDelay(10);
+    }
     /* create all modules thread */
     MODULE_TASKCREATE_ALL;
 
@@ -158,7 +162,6 @@ static void systemTask(__attribute__((unused)) void *parameters)
             oplinkStatus.RxMissed = radio_stats.rx_missed;
             oplinkStatus.RxFailure     = radio_stats.rx_failure;
             oplinkStatus.TxDropped     = radio_stats.tx_dropped;
-            oplinkStatus.TxResent = radio_stats.tx_resent;
             oplinkStatus.TxFailure     = radio_stats.tx_failure;
             oplinkStatus.Resets      = radio_stats.resets;
             oplinkStatus.Timeouts    = radio_stats.timeouts;
