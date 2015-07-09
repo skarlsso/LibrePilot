@@ -29,12 +29,15 @@
 #include <pios_board_info.h>
 #include <uavobjectsinit.h>
 #include <hwsettings.h>
+#include <lednotification.h>
 #include <manualcontrolsettings.h>
 #include <oplinksettings.h>
 #include <oplinkstatus.h>
 #include <oplinkreceiver.h>
 #include <pios_oplinkrcvr_priv.h>
 #include <taskinfo.h>
+#include <pios_ext_leds_priv.h>
+#include <pios_apa102.h>
 #include <pios_ws2811.h>
 #include <sanitycheck.h>
 #include <actuatorsettings.h>
@@ -318,6 +321,11 @@ void PIOS_Board_Init(void)
     if (PIOS_SPI_Init(&pios_spi_gyro_id, &pios_spi_gyro_cfg)) {
         PIOS_DEBUG_Assert(0);
     }
+    if (PIOS_SPI_Init(&pios_spi_flexiio_id, &pios_spi_flexiio_cfg)) {
+        PIOS_DEBUG_Assert(0);
+    }
+
+
 #if false
 
     /* Set up the SPI interface to the flash and rfm22b */
@@ -677,6 +685,7 @@ void PIOS_Board_Init(void)
 #endif
 
     /* Configure the receiver port*/
+    bool enable_apa102_leds = false;
     uint8_t hwsettings_rcvrport;
     HwSettingsRM_RcvrPortGet(&hwsettings_rcvrport);
     //
@@ -692,6 +701,7 @@ void PIOS_Board_Init(void)
     case HWSETTINGS_RM_RCVRPORT_PPM:
     case HWSETTINGS_RM_RCVRPORT_PPMOUTPUTS:
     case HWSETTINGS_RM_RCVRPORT_PPMPWM:
+    case HWSETTINGS_RM_RCVRPORT_PPMAPA102LEDS:
 #if defined(PIOS_INCLUDE_PPM)
         if (hwsettings_rcvrport == HWSETTINGS_RM_RCVRPORT_PPMOUTPUTS) {
             // configure servo outputs and the remaining 5 inputs as outputs
@@ -700,11 +710,19 @@ void PIOS_Board_Init(void)
 
         PIOS_Board_configure_ppm(&pios_ppm_cfg);
 
+        if (hwsettings_rcvrport == HWSETTINGS_RM_RCVRPORT_PPMAPA102LEDS) {
+            enable_apa102_leds = true;
+        }
+
         break;
 #endif /* PIOS_INCLUDE_PPM */
     case HWSETTINGS_RM_RCVRPORT_OUTPUTS:
         // configure only the servo outputs
         pios_servo_cfg = &pios_servo_cfg_out_in;
+        break;
+
+    case HWSETTINGS_RM_RCVRPORT_APA102LEDS:
+        enable_apa102_leds = true;
         break;
     }
 
@@ -720,15 +738,38 @@ void PIOS_Board_Init(void)
     pios_rcvr_group_map[MANUALCONTROLSETTINGS_CHANNELGROUPS_GCS] = pios_gcsrcvr_rcvr_id;
 #endif /* PIOS_INCLUDE_GCSRCVR */
 
+#ifdef PIOS_INCLUDE_APA102
+#include <pios_apa102.h>
+    if (enable_apa102_leds) {
+        if (PIOS_SPI_Init(&pios_spi_flexiio_id, &pios_spi_flexiio_cfg)) {
+            PIOS_DEBUG_Assert(0);
+        }
+
+        if (PIOS_APA102_Init(pios_spi_flexiio_id, 0)) {
+            PIOS_Assert(0);
+        }
+
+        uint32_t pios_apa102_id;
+        PIOS_ExtLeds_Init(&pios_apa102_id, PIOS_APA102_Driver());
+        LedNotificationExtLedsInit(pios_apa102_id);
+    }
+#endif
+
 #ifdef PIOS_INCLUDE_WS2811
 #include <pios_ws2811.h>
-    HwSettingsWS2811LED_OutOptions ws2811_pin_settings;
-    HwSettingsWS2811LED_OutGet(&ws2811_pin_settings);
+    if (!enable_apa102_leds) {
+        HwSettingsWS2811LED_OutOptions ws2811_pin_settings;
+        HwSettingsWS2811LED_OutGet(&ws2811_pin_settings);
 
-    // No other choices but servo pin 1 on nano
-    if (ws2811_pin_settings != HWSETTINGS_WS2811LED_OUT_DISABLED) {
-        pios_tim_servoport_all_pins[0] = dummmy_timer; // free timer 1
-        PIOS_WS2811_Init(&pios_ws2811_cfg, &pios_ws2811_pin_cfg[0]);
+        // No other choices but servo pin 1 on nano
+        if (ws2811_pin_settings != HWSETTINGS_WS2811LED_OUT_DISABLED) {
+            pios_tim_servoport_all_pins[0] = dummmy_timer; // free timer 1
+            PIOS_WS2811_Init(&pios_ws2811_cfg, &pios_ws2811_pin_cfg[0]);
+
+            uint32_t pios_ws2811_id;
+            PIOS_ExtLeds_Init(&pios_ws2811_id, PIOS_WS2811_Driver());
+            LedNotificationExtLedsInit(pios_ws2811_id);
+        }
     }
 #endif // PIOS_INCLUDE_WS2811
 
