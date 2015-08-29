@@ -146,33 +146,62 @@ static pid_scaler create_pid_scaler(int axis)
     // Always scaled with the this.
     scaler.p = scaler.i = scaler.d = speedScaleFactor;
 
-    if (stabSettings.thrust_pid_scaling_enabled[axis][0]
-        || stabSettings.thrust_pid_scaling_enabled[axis][1]
-        || stabSettings.thrust_pid_scaling_enabled[axis][2]) {
-        const pid_curve_scaler curve_scaler = {
-            .x      = get_pid_scale_source_value(),
-            .points = {
-                { 0.00f, stabSettings.stabBank.ThrustPIDScaleCurve[0] },
-                { 0.25f, stabSettings.stabBank.ThrustPIDScaleCurve[1] },
-                { 0.50f, stabSettings.stabBank.ThrustPIDScaleCurve[2] },
-                { 0.75f, stabSettings.stabBank.ThrustPIDScaleCurve[3] },
-                { 1.00f, stabSettings.stabBank.ThrustPIDScaleCurve[4] }
-            }
-        };
+    if (stabSettings.thrust_pid_scaling_enabled[axis][0] ||
+		stabSettings.thrust_pid_scaling_enabled[axis][1] ||
+		stabSettings.thrust_pid_scaling_enabled[axis][2]) {	
 
-        float curve_value = pid_curve_value(&curve_scaler);
+	if (stabSettings.thrust_pid_scaling_enabled[axis][0]) {
+	  const pid_curve_scaler curve_scaler = {
+		.x      = get_pid_scale_source_value(),
+		.points = {
+		  { 0.00f, stabSettings.stabBank.ThrustPIDScaleCurveP[0] },
+		  { 0.25f, stabSettings.stabBank.ThrustPIDScaleCurveP[1] },
+		  { 0.50f, stabSettings.stabBank.ThrustPIDScaleCurveP[2] },
+		  { 0.75f, stabSettings.stabBank.ThrustPIDScaleCurveP[3] },
+		  { 1.00f, stabSettings.stabBank.ThrustPIDScaleCurveP[4] }
+		}
+	  };
+	  float curve_value = pid_curve_value(&curve_scaler);
 
-        if (stabSettings.thrust_pid_scaling_enabled[axis][0]) {
-            scaler.p *= curve_value;
-        }
-        if (stabSettings.thrust_pid_scaling_enabled[axis][1]) {
-            scaler.i *= curve_value;
-        }
-        if (stabSettings.thrust_pid_scaling_enabled[axis][2]) {
-            scaler.d *= curve_value;
-        }
-    }
+	  if (stabSettings.thrust_pid_scaling_enabled[axis][0]) {
+		scaler.p *= curve_value;
+	  }
 
+	} else if (stabSettings.thrust_pid_scaling_enabled[axis][1]) {
+	  const pid_curve_scaler curve_scaler = {
+		.x      = get_pid_scale_source_value(),
+		.points = {
+		  { 0.00f, stabSettings.stabBank.ThrustPIDScaleCurveI[0] },
+		  { 0.25f, stabSettings.stabBank.ThrustPIDScaleCurveI[1] },
+		  { 0.50f, stabSettings.stabBank.ThrustPIDScaleCurveI[2] },
+		  { 0.75f, stabSettings.stabBank.ThrustPIDScaleCurveI[3] },
+		  { 1.00f, stabSettings.stabBank.ThrustPIDScaleCurveI[4] }
+		}
+	  };
+	  float curve_value = pid_curve_value(&curve_scaler);
+
+	  if (stabSettings.thrust_pid_scaling_enabled[axis][1]) {
+		scaler.i *= curve_value;
+	  }
+
+	} else if (stabSettings.thrust_pid_scaling_enabled[axis][2]) {
+	  const pid_curve_scaler curve_scaler = {
+		.x      = get_pid_scale_source_value(),
+		.points = {
+		  { 0.00f, stabSettings.stabBank.ThrustPIDScaleCurveD[0] },
+		  { 0.25f, stabSettings.stabBank.ThrustPIDScaleCurveD[1] },
+		  { 0.50f, stabSettings.stabBank.ThrustPIDScaleCurveD[2] },
+		  { 0.75f, stabSettings.stabBank.ThrustPIDScaleCurveD[3] },
+		  { 1.00f, stabSettings.stabBank.ThrustPIDScaleCurveD[4] }
+		}
+	  };
+	  float curve_value = pid_curve_value(&curve_scaler);
+
+	  if (stabSettings.thrust_pid_scaling_enabled[axis][2]) {
+		scaler.d *= curve_value;
+	  }
+	}
+	}
     return scaler;
 }
 

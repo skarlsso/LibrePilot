@@ -136,8 +136,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>950</width>
-            <height>775</height>
+            <width>933</width>
+            <height>754</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -195,29 +195,28 @@ margin-top: -1px;
                     <string>Acro+</string>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_26">
-
-                 <item row="0" column="0">
-                  <widget class="QCheckBox" name="checkBoxLinkAcroFactors">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="focusPolicy">
-                    <enum>Qt::StrongFocus</enum>
-                   </property>
-                   <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Link roll &amp;amp; pitch sliders to move together&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true"/>
-                   </property>
-                   <property name="text">
-                    <string>Link Roll and Pitch</string>
-                   </property>
-                  </widget>
-                 </item>
+                    <item row="0" column="0">
+                     <widget class="QCheckBox" name="checkBoxLinkAcroFactors">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="focusPolicy">
+                       <enum>Qt::StrongFocus</enum>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Link roll &amp;amp; pitch sliders to move together&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true"/>
+                      </property>
+                      <property name="text">
+                       <string>Link Roll and Pitch</string>
+                      </property>
+                     </widget>
+                    </item>
                     <item row="0" column="1">
                      <widget class="QPushButton" name="pushButton_21">
                       <property name="sizePolicy">
@@ -8368,8 +8367,8 @@ border-radius: 5;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>950</width>
-            <height>736</height>
+            <width>933</width>
+            <height>689</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_29">
@@ -8407,18 +8406,6 @@ border-radius: 5;</string>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
                   <property name="title">
                    <string>Responsiveness</string>
                   </property>
@@ -8455,7 +8442,7 @@ border-radius: 5;</string>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>20</width>
-                       <height>40</height>
+                       <height>10</height>
                       </size>
                      </property>
                     </spacer>
@@ -11136,26 +11123,20 @@ border-radius: 5;</string>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
                   <property name="title">
                    <string>Thrust PID Scaling</string>
                   </property>
                   <property name="checkable">
                    <bool>false</bool>
                   </property>
-                  <layout class="QGridLayout" name="gridLayout_277" rowstretch="0,0,0" columnminimumwidth="0,0">
+                  <layout class="QGridLayout" name="gridLayout_277" rowstretch="0,0">
                    <property name="leftMargin">
                     <number>9</number>
                    </property>
                    <property name="topMargin">
                     <number>9</number>
                    </property>
-                   <item row="1" column="0" rowspan="2">
+                   <item row="0" column="0" rowspan="2">
                     <widget class="QFrame" name="frame_3">
                      <property name="minimumSize">
                       <size>
@@ -12908,28 +12889,177 @@ border-radius: 5;</string>
                         </property>
                        </widget>
                       </item>
+                      <item>
+                       <spacer name="verticalSpacer_11">
+                        <property name="orientation">
+                         <enum>Qt::Vertical</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>20</width>
+                          <height>10</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
                      </layout>
                     </widget>
                    </item>
-                   <item row="1" column="1" rowspan="2">
-                    <widget class="MixerCurveWidget" name="thrustPIDScalingCurve" native="true">
+                   <item row="0" column="1">
+                    <widget class="QTabWidget" name="thrustPIDScalingTabs">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>180</width>
-                       <height>180</height>
+                       <width>220</width>
+                       <height>200</height>
                       </size>
                      </property>
-                     <property name="font">
-                      <font>
-                       <pointsize>7</pointsize>
-                      </font>
+                     <property name="autoFillBackground">
+                      <bool>true</bool>
                      </property>
+                     <property name="tabPosition">
+                      <enum>QTabWidget::North</enum>
+                     </property>
+                     <property name="currentIndex">
+                      <number>0</number>
+                     </property>
+                     <property name="documentMode">
+                      <bool>false</bool>
+                     </property>
+                     <widget class="QWidget" name="tpsPidTabP">
+                      <property name="autoFillBackground">
+                       <bool>true</bool>
+                      </property>
+                      <attribute name="title">
+                       <string>Proportional</string>
+                      </attribute>
+                      <layout class="QHBoxLayout" name="horizontalLayout_7">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>4</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>4</number>
+                       </property>
+                       <item>
+                        <widget class="MixerCurveWidget" name="thrustPIDScalingCurveP" native="true">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <pointsize>7</pointsize>
+                          </font>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                     <widget class="QWidget" name="tpsPidTabI">
+                      <property name="autoFillBackground">
+                       <bool>true</bool>
+                      </property>
+                      <attribute name="title">
+                       <string>Integral</string>
+                      </attribute>
+                      <layout class="QHBoxLayout" name="horizontalLayout_8">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>4</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>4</number>
+                       </property>
+                       <item>
+                        <widget class="MixerCurveWidget" name="thrustPIDScalingCurveI" native="true">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <pointsize>7</pointsize>
+                          </font>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                     <widget class="QWidget" name="tpsPidTabD">
+                      <property name="autoFillBackground">
+                       <bool>true</bool>
+                      </property>
+                      <attribute name="title">
+                       <string>Derivative</string>
+                      </attribute>
+                      <layout class="QHBoxLayout" name="horizontalLayout_9">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>4</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>4</number>
+                       </property>
+                       <item>
+                        <widget class="MixerCurveWidget" name="thrustPIDScalingCurveD" native="true">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <pointsize>7</pointsize>
+                          </font>
+                         </property>
+                         <property name="autoFillBackground">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
                     </widget>
                    </item>
                   </layout>
@@ -18361,7 +18491,7 @@ border-radius: 5;</string>
             <x>0</x>
             <y>0</y>
             <width>950</width>
-            <height>671</height>
+            <height>678</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0,0">
@@ -24207,7 +24337,7 @@ font:bold;</string>
             <x>0</x>
             <y>0</y>
             <width>950</width>
-            <height>671</height>
+            <height>678</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_18">
