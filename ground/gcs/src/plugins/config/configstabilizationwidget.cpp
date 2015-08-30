@@ -572,14 +572,18 @@ void ConfigStabilizationWidget::copyCurrentStabBank()
 void ConfigStabilizationWidget::updateTPSPIDTabStatus()
 {
     int option = getComboboxSelectedOption(ui->ThrustPIDTarget);
-    UAVObject* stabObject = getStabBankObject(m_currentStabSettingsBank);
-    Q_ASSERT(stabObject);
-    UAVObjectField* scaleTargetField = stabObject->getField("ThrustPIDScaleTarget");
-    Q_ASSERT(scaleTargetField);
-    QString optionString = scaleTargetField->getOptions().at(option);
-    ui->thrustPIDScalingTabs->setTabEnabled(0, optionString.contains("P"));
-    ui->thrustPIDScalingTabs->setTabEnabled(1, optionString.contains("I"));
-    ui->thrustPIDScalingTabs->setTabEnabled(2, optionString.contains("D"));
+    if (option >= 0) {
+        UAVObject* stabObject = getStabBankObject(m_currentStabSettingsBank);
+        Q_ASSERT(stabObject);
+        UAVObjectField* scaleTargetField = stabObject->getField("ThrustPIDScaleTarget");
+        Q_ASSERT(scaleTargetField);
+        if (scaleTargetField->getOptions().length() >= option) {
+            QString optionString = scaleTargetField->getOptions().at(option);
+            ui->thrustPIDScalingTabs->setTabEnabled(0, optionString.contains("P"));
+            ui->thrustPIDScalingTabs->setTabEnabled(1, optionString.contains("I"));
+            ui->thrustPIDScalingTabs->setTabEnabled(2, optionString.contains("D"));
+        }
+    }
 }
 
 void ConfigStabilizationWidget::copyFromBankToBank(int fromBank, int toBank)
